@@ -10,8 +10,7 @@ df = df.melt(id_vars=['epsilon', 'bandit', 'play'],
 
 g = sns.FacetGrid(data=df, row='variable', hue='epsilon', sharey=False)
 g.map(sns.pointplot,
-      'step',
+      'play',
       'value',
-      order=sorted(df['step'].unique()),
-      ci=None)
+      order=sorted(df['play'].unique()))
 g.savefig('2.1.png', bbox_inches='tight')

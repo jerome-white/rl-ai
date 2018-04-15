@@ -20,7 +20,7 @@ class Action:
     def __eq__(self, other):
         return self.name == other.name
 
-    def use(self):
+    def activate(self):
         self.chosen += 1
         self.estimate += 1 / self.chosen * (self.reward - self.estimate)
 
@@ -49,7 +49,7 @@ class Bandit:
         self.points = (self.plays * self.points + action.reward) / plays
         self.plays = plays
 
-        action.use()
+        action.activate()
 
     def isoptimal(self, action):
         return action == max(self.actions, key=op.attrgetter('reward'))
