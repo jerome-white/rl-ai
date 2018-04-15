@@ -2,6 +2,7 @@ import sys
 import csv
 import numpy as np
 import logging
+import operator as op
 import itertools as it
 import collections as cl
 import multiprocessing as mp
@@ -36,11 +37,10 @@ class Bandit:
         return self
 
     def __next__(self):
-        explore = self.epsilon and np.random.binomial(1, self.epsilon)
-        if explore:
-            action = np.random.choice(self.actions)
+        if np.random.binomial(1, self.epsilon):
+            action = np.random.choice(self.actions) # explore
         else:
-            action = max(self.actions, key=lambda x: x.estimate)
+            action = max(self.actions, key=op.attrgetter('estimate')) # exploit
 
         return action
 
@@ -52,7 +52,7 @@ class Bandit:
         action.use()
 
     def isoptimal(self, action):
-        return action == max(self.actions, key=lambda x: x.reward)
+        return action == max(self.actions, key=op.attrgetter('reward'))
 
 def play(incoming, outgoing, arms, pulls):
     while True:
