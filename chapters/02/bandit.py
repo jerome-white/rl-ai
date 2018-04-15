@@ -14,6 +14,9 @@ class Action:
     def __eq__(self, other):
         return self.name == other.name
 
+    def __float__(self):
+        return np.random.randn() + self.reward
+
     def activate(self):
         self.chosen += 1
         self.estimate += 1 / self.chosen * (self.reward - self.estimate)
@@ -39,11 +42,15 @@ class Bandit:
         return action
 
     def do(self, action):
+        reward = float(action)
+
         plays = self.plays + 1
-        self.points = (self.plays * self.points + action.reward) / plays
+        self.points = (self.plays * self.points + reward) / plays
         self.plays = plays
 
         action.activate()
+
+        return reward
 
     def isoptimal(self, action):
         return action == max(self.actions, key=op.attrgetter('reward'))

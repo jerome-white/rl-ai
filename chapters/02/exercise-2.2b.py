@@ -15,9 +15,9 @@ def run(incoming, outgoing, arms, pulls):
 
         b = Bandit(arms, epsilon)
         for (play, action) in enumerate(it.islice(b, 0, pulls)):
-            b.do(action)
+            reward = b.do(action)
             optimal = int(b.isoptimal(action))
-            outgoing.put(Result(epsilon, bandit, play, action.reward, optimal))
+            outgoing.put(Result(epsilon, bandit, play, reward, optimal))
         outgoing.put(None)
 
 logging.basicConfig(level=logging.DEBUG,
