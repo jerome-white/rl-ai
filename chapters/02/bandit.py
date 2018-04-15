@@ -8,7 +8,7 @@ import collections as cl
 import multiprocessing as mp
 from argparse import ArgumentParser
 
-Result = cl.namedtuple('Result', 'epsilon, bandit, step, reward, optimal')
+Result = cl.namedtuple('Result', 'epsilon, bandit, play, reward, optimal')
 
 class Action:
     def __init__(self, name):
@@ -54,17 +54,17 @@ class Bandit:
     def isoptimal(self, action):
         return action == max(self.actions, key=op.attrgetter('reward'))
 
-def play(incoming, outgoing, arms, pulls):
+def run(incoming, outgoing, arms, pulls):
     while True:
         ((epsilon, bandit)) = incoming.get()
 
         logging.info('{0} {1}'.format(epsilon, bandit))
 
         b = Bandit(arms, epsilon)
-        for (step, action) in enumerate(it.islice(b, 0, pulls)):
+        for (play, action) in enumerate(it.islice(b, 0, pulls)):
             b.do(action)
             optimal = int(b.isoptimal(action))
-            outgoing.put(Result(epsilon, bandit, step, action.reward, optimal))
+            outgoing.put(Result(epsilon, bandit, play, action.reward, optimal))
         outgoing.put(None)
 
 logging.basicConfig(level=logging.DEBUG,
@@ -83,7 +83,7 @@ outgoing = mp.Queue()
 
 initargs = (outgoing, incoming, args.arms, args.pulls)
 
-with mp.Pool(args.workers, play, initargs) as pool:
+with mp.Pool(args.workers, run, initargs) as pool:
     jobs = 0
     for i in map(float, args.epsilon):
         for j in range(args.bandits):
@@ -93,8 +93,8 @@ with mp.Pool(args.workers, play, initargs) as pool:
     writer = csv.DictWriter(sys.stdout, fieldnames=Result._fields)
     writer.writeheader()
     while jobs:
-        step = incoming.get()
-        if step is None:
+        play = incoming.get()
+        if play is None:
             jobs -= 1
         else:
-            writer.writerow(step._asdict())
+            writer.writerow(play._asdict())
