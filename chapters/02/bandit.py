@@ -19,20 +19,23 @@ class SampleAverage:
 class Action:
     def __init__(self, name):
         self.name = name
-        self.selected = 0
         self.reward = np.random.normal()
         self.estimate = SampleAverage()
 
     def __eq__(self, other):
         return self.name == other.name
 
+    def execute(self):
+        reward = np.random.normal(self.reward)
+        self.estimate.update(reward)
+
+        return reward
+
 class Bandit:
     def __init__(self, arms, epsilon=0):
         self.arms = arms
         self.epsilon = epsilon
 
-        # self.plays = 0
-        # self.points = 0
         self.actions = [ Action(x) for x in range(self.arms) ]
 
     def __iter__(self):
@@ -45,15 +48,11 @@ class Bandit:
         else:
             # exploit
             action = max(self.actions, key=lambda x: float(x.estimate))
-        action.selected += 1
 
         return action
 
     def pull(self, action):
-        reward = np.random.normal(action.reward)
-        action.estimate.update(reward)
-
-        return reward
+        return action.execute()
 
     def isoptimal(self, action):
         return action == max(self.actions, key=lambda x: x.reward)
