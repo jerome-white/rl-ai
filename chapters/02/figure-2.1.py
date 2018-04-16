@@ -16,7 +16,10 @@ df = (pd
       .unstack(level=0))
 
 plt.style.use('ggplot')
+
 (figure, axes) = plt.subplots(nrows=2, sharex=False)
+figure.set_size_inches(figure.get_size_inches() * (1.5, 2.25))
+
 for (ax, factor) in zip(axes, ('reward', 'optimal')):
     df[factor].plot(ax=ax)
 plt.savefig(str(args.output), bbox_inches='tight')
