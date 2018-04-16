@@ -49,7 +49,7 @@ class Bandit:
 
         return action
 
-    def do(self, action):
+    def pull(self, action):
         reward = action.reward
         action.estimate.update(reward)
 

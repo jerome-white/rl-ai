@@ -15,7 +15,7 @@ def run(incoming, outgoing, arms, pulls):
 
         b = Bandit(arms, epsilon)
         for (play, action) in enumerate(it.islice(b, 0, pulls)):
-            reward = b.do(action)
+            reward = b.pull(action)
             optimal = int(b.isoptimal(action))
             outgoing.put(Result(epsilon, bandit, play, reward, optimal))
         outgoing.put(None)
