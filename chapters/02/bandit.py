@@ -20,7 +20,7 @@ class Action:
     def __init__(self, name):
         self.name = name
         self.selected = 0
-        self.reward = np.random.randn()
+        self.reward = np.random.normal()
         self.estimate = SampleAverage()
 
     def __eq__(self, other):
@@ -50,7 +50,7 @@ class Bandit:
         return action
 
     def pull(self, action):
-        reward = action.reward
+        reward = np.random.normal(action.reward)
         action.estimate.update(reward)
 
         return reward
