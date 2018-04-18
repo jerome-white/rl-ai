@@ -57,7 +57,9 @@ class Bandit:
             action = np.random.choice(self.actions, p=p)
         else:
             # exploit
-            action = max(self.actions, key=lambda x: float(x.estimate))
+            estimates = [ float(x.estimate) for x in self.actions ]
+            largest = np.argwhere(estimates == np.max(estimates)).flatten()
+            action = self.actions[np.random.choice(largest)]
 
         return action
 
