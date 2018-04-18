@@ -53,7 +53,7 @@ class Bandit:
                 p = np.array([ self.softmax(x) for x in self.actions ])
                 p /= np.sum(p)
             else:
-                p = np.ones(len(self.actions))
+                p = None
             action = np.random.choice(self.actions, p=p)
         else:
             # exploit
