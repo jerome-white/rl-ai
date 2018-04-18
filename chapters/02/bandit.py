@@ -50,15 +50,14 @@ class Bandit:
             action = np.random.choice(self.actions)
         else:
             # exploit
-            df = pd.Series([ float(x.estimate) for x in self.actions ])
             if self.temperature:
-                f = lambda x: np.exp(x) / self.temperature
+                p = np.array([
+                    np.exp(float(x)) / self.temperature for x in self.actions
+                ])
+                p /= np.sum(p)
+                action = np.random.choice(self.actions, p=p)
             else:
-                f = lambda x: 0 if x < df.max() else 1
-            df = df.apply(f)
-            df /= df.sum()
-
-            action = np.random.choice(self.actions, p=df.values)
+                action = max(self.actions, key=lambda x: float(x.estimate))
 
         return action
 
