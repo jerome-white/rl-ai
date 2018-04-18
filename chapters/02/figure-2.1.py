@@ -7,11 +7,14 @@ import matplotlib.pyplot as plt
 
 arguments = ArgumentParser()
 arguments.add_argument('--output', type=Path)
+arguments.add_argument('--factor')
 args = arguments.parse_args()
+
+assert(args.factor == 'epsilon' or args.factor == 'temperature')
 
 df = (pd
       .read_csv(sys.stdin, index_col=False)
-      .groupby(['epsilon', 'play'])
+      .groupby([args.factor, 'play'])
       .mean()
       .unstack(level=0))
 
