@@ -3,8 +3,6 @@ import collections as cl
 import pandas as pd
 import numpy as np
 
-Result = cl.namedtuple('Result', 'epsilon, bandit, play, reward, optimal')
-
 class SampleAverage:
     def __init__(self):
         self.i = 0
