@@ -37,7 +37,7 @@ class Bandit:
         self.epsilon = epsilon
 
         if temperature:
-            self.softmax = lambda x: np.exp(float(x.estimate)) / temperature
+            self.softmax = lambda x: np.exp(float(x.estimate) / temperature)
         else:
             self.softmax = None
 
