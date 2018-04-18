@@ -29,7 +29,8 @@ def run(incoming, outgoing, pulls):
         outgoing.put(None)
 
 logging.basicConfig(level=logging.DEBUG,
-                    format='[ %(asctime)s ] %(levelname)s: %(message)s')
+                    format='[ %(asctime)s ] %(levelname)s: %(message)s',
+                    datefmt='%H:%M:%S')
 
 arguments = ArgumentParser()
 arguments.add_argument('--bandits', type=int)
@@ -47,12 +48,13 @@ initargs = (outgoing, incoming, args.pulls)
 
 with mp.Pool(args.workers, run, initargs) as pool:
     jobs = 0
-    temperature = [ 0 ] if args.temperature is None else args.temperature
+    epsilon = [ 0 ] if not args.epsilon else args.epsilon
+    temperature = [ 0 ] if not args.temperature else args.temperature
 
     for (i, *args) in it.product(range(args.bandits),
-                                [ args.arms ],
-                                args.epsilon,
-                                temperature):
+                                 [ args.arms ],
+                                 epsilon,
+                                 temperature):
         outgoing.put((i, BanditArgs._make(args)))
         jobs += 1
 
