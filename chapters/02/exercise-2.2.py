@@ -19,10 +19,10 @@ def run(incoming, outgoing, pulls):
         (bid, bargs) = incoming.get()
         logging.info('{0}: {1}'.format(bid, bargs))
 
-        b = Bandit(*bargs)
-        for (play, action) in enumerate(it.islice(b, 0, pulls)):
-            reward = b.pull(action)
-            optimal = int(b.isoptimal(action))
+        bandit = Bandit(*bargs)
+        for (play, action) in enumerate(it.islice(bandit, 0, pulls)):
+            reward = bandit.pull(action)
+            optimal = int(bandit.isoptimal(action))
             result = it.chain(bargs, (bid, play, reward, optimal))
 
             outgoing.put(Result._make(result))
