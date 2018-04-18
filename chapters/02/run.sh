@@ -11,4 +11,22 @@ python exercise-2.2.py \
        --bandits 2000 \
        --arms 10 \
        --pulls 1000 |
-    python figure-2.1.py --output figure-2.1.png
+    python figure-2.1.py \
+	   --factor epsilon \
+	   --output figure-2.1.png
+
+temperature=(
+    1
+    10
+    100
+)
+
+python exercise-2.2.py \
+       --temperature `sed -e's/ / --temperature /g' <<< ${temperature[@]}` \
+       --epsilon 0.01 \
+       --bandits 2000 \
+       --arms 10 \
+       --pulls 1000 |
+    python figure-2.1.py \
+	   --factor temperature \
+	   --output exercise-2.2.png
