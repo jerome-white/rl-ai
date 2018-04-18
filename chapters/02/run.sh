@@ -16,8 +16,8 @@ python exercise-2.2.py \
 	   --output figure-2.1.png
 
 temperature=(
+    0.001
     1
-    10
     100
 )
 
