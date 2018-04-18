@@ -49,15 +49,15 @@ class Bandit:
     def __next__(self):
         if np.random.binomial(1, self.epsilon):
             # explore
-            action = np.random.choice(self.actions)
-        else:
-            # exploit
-            if self.softmax is None:
-                action = max(self.actions, key=lambda x: float(x.estimate))
-            else:
+            if self.softmax:
                 p = np.array([ self.softmax(x) for x in self.actions ])
                 p /= np.sum(p)
-                action = np.random.choice(self.actions, p=p)
+            else:
+                p = np.ones(len(self.actions))
+            action = np.random.choice(self.actions, p=p)
+        else:
+            # exploit
+            action = max(self.actions, key=lambda x: float(x.estimate))
 
         return action
 
