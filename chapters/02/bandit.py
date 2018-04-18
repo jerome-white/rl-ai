@@ -49,9 +49,8 @@ class Bandit:
         else:
             # exploit
             if self.temperature:
-                p = np.array([
-                    np.exp(float(x)) / self.temperature for x in self.actions
-                ])
+                f = lambda x: np.exp(float(x.estimate))) / self.temperature
+                p = np.fromiter(map(f, self.actions), count=len(self.actions))
                 p /= np.sum(p)
                 action = np.random.choice(self.actions, p=p)
             else:
