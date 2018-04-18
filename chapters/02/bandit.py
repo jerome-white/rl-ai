@@ -35,7 +35,11 @@ class Bandit:
     def __init__(self, arms, epsilon=0, temperature=0):
         self.arms = arms
         self.epsilon = epsilon
-        self.temperature = temperature
+
+        if temperature:
+            self.softmax = lambda x: np.exp(float(x.estimate)) / temperature
+        else:
+            self.softmax = None
 
         self.actions = [ Action(x) for x in range(self.arms) ]
 
@@ -48,13 +52,12 @@ class Bandit:
             action = np.random.choice(self.actions)
         else:
             # exploit
-            if self.temperature:
-                f = lambda x: np.exp(float(x.estimate))) / self.temperature
-                p = np.fromiter(map(f, self.actions), count=len(self.actions))
+            if self.softmax is None:
+                action = max(self.actions, key=lambda x: float(x.estimate))
+            else:
+                p = np.array([ self.softmax(x) for x in self.actions ])
                 p /= np.sum(p)
                 action = np.random.choice(self.actions, p=p)
-            else:
-                action = max(self.actions, key=lambda x: float(x.estimate))
 
         return action
 
