@@ -6,7 +6,7 @@ epsilon=(
     0.1
 )
 
-python exercise-2.2b.py \
+python exercise-2.2.py \
        --epsilon `sed -e's/ / --epsilon /g' <<< ${epsilon[@]}` \
        --bandits 2000 \
        --arms 10 \
