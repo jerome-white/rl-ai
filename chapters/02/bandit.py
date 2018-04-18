@@ -1,5 +1,7 @@
-import numpy as np
 import collections as cl
+
+import pandas as pd
+import numpy as np
 
 Result = cl.namedtuple('Result', 'epsilon, bandit, play, reward, optimal')
 
@@ -32,9 +34,10 @@ class Action:
         return reward
 
 class Bandit:
-    def __init__(self, arms, epsilon=0):
+    def __init__(self, arms, epsilon=0, temperature=0):
         self.arms = arms
         self.epsilon = epsilon
+        self.temperature = temperature
 
         self.actions = [ Action(x) for x in range(self.arms) ]
 
@@ -47,7 +50,15 @@ class Bandit:
             action = np.random.choice(self.actions)
         else:
             # exploit
-            action = max(self.actions, key=lambda x: float(x.estimate))
+            df = pd.Series([ float(x.estimate) for x in self.actions ])
+            if self.temperature:
+                f = lambda x: np.exp(x) / self.temperature
+            else:
+                f = lambda x: 0 if x < df.max() else 1
+            df = df.apply(f)
+            df /= df.sum()
+
+            action = np.random.choice(self.actions, p=df.values)
 
         return action
 
