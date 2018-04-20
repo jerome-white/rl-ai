@@ -3,18 +3,37 @@ import collections as cl
 import pandas as pd
 import numpy as np
 
-class SampleAverage:
+class Average:
     def __init__(self):
-        self.i = 0
+        self.k = 0
         self.value = float(0)
 
     def __float__(self):
         return self.value
 
     def update(self, value):
-        i = self.i + 1
-        self.value = (self.i * self.value + value) / i
-        self.i = i
+        raise NotImplementedError()
+
+class SampleAverage(Average):
+    def __init__(self):
+        super().__init__()
+
+    def update(self, value):
+        k = self.k + 1
+        self.value = (self.k * self.value + value) / k
+        self.k = k
+
+class NonStationaryAverage(Average):
+    def __init__(self, alpha=None):
+        super().__init__()
+        self.step = alpha
+
+    def alpha(self):
+        return 1 / (self.k + 1) if self.step is None else self.step
+
+    def update(self, value):
+        self.value += self.alpha() * (value - self.value)
+        self.k += 1
 
 class Action:
     def __init__(self, name):
