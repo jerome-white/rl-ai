@@ -20,9 +20,9 @@ def run(incoming, outgoing, pulls):
         logging.info('{0}: {1}'.format(bid, bargs))
 
         bandit = Bandit(*bargs)
-        for (play, action) in enumerate(it.islice(bandit, 0, pulls)):
-            reward = bandit.pull(action)
-            optimal = int(bandit.isoptimal(action))
+        for (play, arm) in enumerate(it.islice(bandit, 0, pulls)):
+            reward = bandit.pull(arm)
+            optimal = int(bandit.isoptimal(arm))
             result = it.chain(bargs, (bid, play, reward, optimal))
 
             outgoing.put(Result._make(result))
@@ -48,13 +48,14 @@ initargs = (outgoing, incoming, args.pulls)
 
 with mp.Pool(args.workers, run, initargs) as pool:
     jobs = 0
-    epsilon = [ 0 ] if not args.epsilon else args.epsilon
-    temperature = [ 0 ] if not args.temperature else args.temperature
-
-    for (i, *args) in it.product(range(args.bandits),
-                                 [ args.arms ],
-                                 epsilon,
-                                 temperature):
+    dimensions = [
+        range(args.bandits),
+        [ args.arms ],
+        [ 0 ] if not args.epsilon else args.epsilon,
+        [ 0 ] if not args.temperature else args.temperature,
+    ]
+    
+    for (i, *args) in it.product(*dimensions):
         outgoing.put((i, BanditArgs._make(args)))
         jobs += 1
 

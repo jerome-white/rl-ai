@@ -3,14 +3,14 @@ import collections as cl
 import pandas as pd
 import numpy as np
 
-class Action:
+class Arm:
     def __init__(self, name, step=None):
         self.name = name
         self.step = step
 
         self.reward = np.random.normal()
         self.pulls = 0
-        self.estimate = 0
+        self.estimate = float(0)
 
     def __eq__(self, other):
         return self.name == other.name
@@ -25,7 +25,7 @@ class Action:
         reward = np.random.normal(self.reward)
 
         alpha = 1 / (self.pulls + 1) if self.step is None else self.alpha
-        self.estimate += alpha * (value - self.estimate)
+        self.estimate += alpha * (reward - self.estimate)
         self.pulls += 1
 
         return reward
@@ -39,7 +39,7 @@ class Bandit:
         else:
             self.softmax = None
 
-        self.actions = [ Action(x) for x in range(arms) ]
+        self.arms = [ Arm(x) for x in range(arms) ]
 
     def __iter__(self):
         return self
@@ -48,21 +48,21 @@ class Bandit:
         if np.random.binomial(1, self.epsilon):
             # explore
             if self.softmax:
-                p = np.array([ self.softmax(x) for x in self.actions ])
+                p = np.array([ self.softmax(x) for x in self.arms ])
                 p /= np.sum(p)
             else:
                 p = None
-            action = np.random.choice(self.actions, p=p)
+            action = np.random.choice(self.arms, p=p)
         else:
             # exploit
-            estimates = list(map(float, self.actions))
+            estimates = list(map(float, self.arms))
             largest = np.argwhere(estimates == np.max(estimates)).flatten()
-            action = self.actions[np.random.choice(largest)]
+            action = self.arms[np.random.choice(largest)]
 
         return action
 
-    def pull(self, action):
-        return action.execute()
+    def pull(self, arm):
+        return arm.execute()
 
     def isoptimal(self, action):
-        return action == max(self.actions, key=lambda x: x.reward)
+        return action == max(self.arms, key=lambda x: x.reward)
