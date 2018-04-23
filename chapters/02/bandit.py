@@ -1,14 +1,11 @@
-import collections as cl
-
-import pandas as pd
 import numpy as np
 
 class Arm:
-    def __init__(self, name, step=None):
+    def __init__(self, name, alpha=0, reward=None):
         self.name = name
-        self.step = step
+        self.alpha = alpha
+        self.reward = np.random.normal() if reward is None else reward
 
-        self.reward = np.random.normal()
         self.pulls = 0
         self.estimate = float(0)
 
@@ -18,28 +15,20 @@ class Arm:
     def __float__(self):
         return self.estimate
 
-    # def __gt__(self, other):
-    #     return float(self) > float(other)
-
     def execute(self):
         reward = np.random.normal(self.reward)
 
-        alpha = 1 / (self.pulls + 1) if self.step is None else self.alpha
+        alpha = self.alpha if self.alpha else 1 / (self.pulls + 1)
         self.estimate += alpha * (reward - self.estimate)
         self.pulls += 1
 
         return reward
 
 class Bandit:
-    def __init__(self, arms, epsilon=0, temperature=0):
+    def __init__(self, arms, explorer, epsilon=0):
+        self.arms = arms
         self.epsilon = epsilon
-
-        if temperature:
-            self.softmax = lambda x: np.exp(float(x) / temperature)
-        else:
-            self.softmax = None
-
-        self.arms = [ Arm(x) for x in range(arms) ]
+        self.explorer = explorer
 
     def __iter__(self):
         return self
@@ -47,12 +36,7 @@ class Bandit:
     def __next__(self):
         if np.random.binomial(1, self.epsilon):
             # explore
-            if self.softmax:
-                p = np.array([ self.softmax(x) for x in self.arms ])
-                p /= np.sum(p)
-            else:
-                p = None
-            action = np.random.choice(self.arms, p=p)
+            action = self.explorer.choose(self.arms)
         else:
             # exploit
             estimates = list(map(float, self.arms))
