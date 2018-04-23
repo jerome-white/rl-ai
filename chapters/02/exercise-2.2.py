@@ -6,8 +6,9 @@ import collections as cl
 import multiprocessing as mp
 from argparse import ArgumentParser
 
-from bandit import Bandit, Arms
+from action import Arm
 from sstrat import Explore, SoftMax
+from bandit import ActionRewardBandit as Bandit
 
 result = [
     'bandit',
