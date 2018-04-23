@@ -68,3 +68,13 @@ class ReinforcementBandit(Bandit):
         reference = reward - self.reference
         arm.estimate += self.beta * reference
         self.reference += self.alpha * reference
+
+class PursuitBandit(Bandit):
+    def __init__(self, arms, beta):
+        super().__init__(arms, None)
+
+        self.beta = beta
+
+    def _pull(self, arm, reward):
+        for a in self.arms:
+            a.estimate += self.beta * (int(a == arm) - a.estimate)
