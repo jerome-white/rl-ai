@@ -10,8 +10,10 @@ class Explore(SelectionStrategy):
 
 class SoftMax(SelectionStrategy):
     def __init__(self, temperature):
+        assert(temperature != 0)
+
         self.temperature = temperature
-        
+
     def choose(self, arms):
         p = np.array([ np.exp(float(x) / self.temperature) for x in arms ])
         p /= np.sum(p)
