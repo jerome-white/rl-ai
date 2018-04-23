@@ -15,15 +15,6 @@ class Arm:
     def __float__(self):
         return self.estimate
 
-    def execute(self):
-        reward = np.random.normal(self.reward)
-
-        alpha = self.alpha if self.alpha else 1 / (self.pulls + 1)
-        self.estimate += alpha * (reward - self.estimate)
-        self.pulls += 1
-
-        return reward
-
 class Bandit:
     def __init__(self, arms, explorer, epsilon=0):
         self.arms = arms
@@ -45,8 +36,35 @@ class Bandit:
 
         return action
 
-    def pull(self, arm):
-        return arm.execute()
-
     def isoptimal(self, action):
         return action == max(self.arms, key=lambda x: x.reward)
+
+    def pull(self, arm):
+        reward = np.random.normal(arm.reward)
+        self._pull(arm, reward)
+
+        return reward
+
+    def _pull(self, arm, reward):
+        raise NotImplementedError()
+
+class ActionRewardBandit(Bandit):
+    def _pull(self, arm, reward):
+        alpha = arm.alpha if arm.alpha else 1 / (arm.pulls + 1)
+        arm.estimate += alpha * (reward - arm.estimate)
+        arm.pulls += 1
+
+class ReinforcementBandit(Bandit):
+    def __init__(self, arms, beta, alpha, reference=0):
+        super().__init__(arms, SoftMax(1), 1)
+
+        assert(0 < alpha <= 1)
+
+        self.alpha = alpha
+        self.beta = beta
+        self.reference = reference
+
+    def _pull(self, arm, reward):
+        reference = reward - self.reference
+        arm.estimate += self.beta * reference
+        self.reference += self.alpha * reference
