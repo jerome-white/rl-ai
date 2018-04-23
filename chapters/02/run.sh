@@ -30,3 +30,18 @@ python exercise-2.2.py \
     python figure-2.1.py \
 	   --factor temperature \
 	   --output exercise-2.2.png
+
+alpha=(
+    0
+    0.1
+)
+
+python exercise-2.2.py \
+       --step-size `sed -e's/ / --step-size /g' <<< ${alpha[@]}` \
+       --epsilon 0.1 \
+       --bandits 2000 \
+       --arms 10 \
+       --pulls 2000 |
+    python figure-2.1.py \
+	   --factor alpha \
+	   --output figure-2.1.png
