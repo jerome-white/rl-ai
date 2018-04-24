@@ -26,30 +26,30 @@ class Bandit:
 
     def pull(self, arm):
         reward = np.random.normal(arm.reward)
-        self._pull(arm, reward)
+        self.update(arm, reward)
 
         return reward
 
-    def _pull(self, arm, reward):
+    def update(self, arm, reward):
         raise NotImplementedError()
 
 class ActionRewardBandit(Bandit):
-    def _pull(self, arm, reward):
+    def update(self, arm, reward):
         alpha = arm.alpha if arm.alpha else 1 / (arm.pulls + 1)
         arm.estimate += alpha * (reward - arm.estimate)
         arm.pulls += 1
 
 class ReinforcementBandit(Bandit):
-    def __init__(self, arms, beta, alpha, reference=0):
-        super().__init__(arms, SoftMax(1), 1)
-
+    def __init__(self, arms, alpha, beta, reference=0):
         assert(0 < alpha <= 1)
+
+        super().__init__(arms, SoftMax(1), 1)
 
         self.alpha = alpha
         self.beta = beta
         self.reference = reference
 
-    def _pull(self, arm, reward):
+    def update(self, arm, reward):
         reference = reward - self.reference
         arm.estimate += self.beta * reference
         self.reference += self.alpha * reference
@@ -60,6 +60,7 @@ class PursuitBandit(Bandit):
 
         self.beta = beta
 
-    def _pull(self, arm, reward):
+    def update(self, arm, reward):
         for a in self.arms:
-            a.estimate += self.beta * (int(a == arm) - a.estimate)
+            factor = int(a == arm)
+            a.estimate += self.beta * (factor - a.estimate)
