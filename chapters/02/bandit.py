@@ -43,7 +43,7 @@ class ReinforcementBandit(Bandit):
     def __init__(self, arms, alpha, beta, reference=0):
         assert(0 < alpha <= 1)
 
-        super().__init__(arms, SoftMax(1), 1)
+        super().__init__(arms, SoftMax(), 1)
 
         self.alpha = alpha
         self.beta = beta

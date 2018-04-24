@@ -9,7 +9,7 @@ class Explore(SelectionStrategy):
         return np.random.choice(arms)
 
 class SoftMax(SelectionStrategy):
-    def __init__(self, temperature):
+    def __init__(self, temperature=1):
         assert(temperature != 0)
 
         self.temperature = temperature
