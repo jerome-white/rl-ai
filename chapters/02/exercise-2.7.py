@@ -7,8 +7,8 @@ import multiprocessing as mp
 from argparse import ArgumentParser
 
 from action import Arm
-from sstrat import Explore
-from bandit import ActionRewardBandit as Bandit
+from bandit import ActionRewardBandit
+from strategy import Explore
 
 Result = cl.namedtuple('Result', 'bandit, play, alpha, reward, optimal')
 
@@ -18,7 +18,7 @@ def run(incoming, outgoing, arms, pulls):
         logging.info('{0}: {1}'.format(bid, bargs))
 
         arms = [ Arm(x, reward=0, alpha=step) for x in range(arms) ]
-        bandit = Bandit(arms, Explore(), epsilon=0.1)
+        bandit = ActionRewardBandit(arms, Explore(), epsilon=0.1)
 
         for (play, arm) in enumerate(it.islice(bandit, 0, pulls)):
             reward = bandit.pull(arm)

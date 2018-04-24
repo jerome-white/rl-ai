@@ -1,5 +1,7 @@
 import numpy as np
 
+from strategy import SelectionStrategy, SoftMax
+
 class Bandit:
     def __init__(self, arms, explorer, epsilon=0):
         self.arms = arms

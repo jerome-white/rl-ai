@@ -7,8 +7,8 @@ import multiprocessing as mp
 from argparse import ArgumentParser
 
 from action import Arm
-from sstrat import Explore, SoftMax
-from bandit import ActionRewardBandit as Bandit
+from bandit import ActionRewardBandit
+from strategy import Explore, SoftMax
 
 result = [
     'bandit',
@@ -26,7 +26,7 @@ def run(incoming, outgoing, pulls, arms):
 
         arms = [ Arm(x) for x in range(arms) ]
         explore = SoftMax(temperature) if temperature else Explore()
-        bandit = Bandit(arms, Explore(), epsilon)
+        bandit = ActionRewardBandit(arms, Explore(), epsilon)
         
         for (play, arm) in enumerate(it.islice(bandit, 0, pulls)):
             reward = bandit.pull(arm)
