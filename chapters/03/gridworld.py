@@ -1,7 +1,10 @@
 import random
 import itertools as it
+import collection as cl
 
 import numpy as np
+
+Step = cl.nametuple('Step', 'reward, action')
 
 def navigator():
     for (i, j) in it.permutations(range(-1, 2), 2):
@@ -12,9 +15,6 @@ class Action:
     def __init__(self):
         self.reward = 0
         self.neighborhood = []
-
-    def __next__(self):
-        return random.choice(self.neighborhood)
 
 class Grid:
     def __init__(self, rows, columns=None):
@@ -40,11 +40,12 @@ class Grid:
         return self
 
     def __next__(self):
-        action = next(self.current)
+        action = random.choice(self.current.neighborhood)
+
         if action is None:
             reward = -1
         else:
-            reward = action.reward
+            reward = self.current.reward
             self.current = action
 
-        return (reward, self.current)
+        return Step(reward, self.current)
