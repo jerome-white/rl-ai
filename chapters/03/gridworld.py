@@ -1,10 +1,7 @@
 import random
 import itertools as it
-import collection as cl
 
 import numpy as np
-
-Step = cl.nametuple('Step', 'reward, action')
 
 def navigator():
     for (i, j) in it.permutations(range(-1, 2), 2):
@@ -12,40 +9,78 @@ def navigator():
             yield lambda x, y: (x + i, y + j)
 
 class Action:
-    def __init__(self):
-        self.reward = 0
-        self.neighborhood = []
+    def __init__(self, neighbors=None):
+        self.estimate = 0
+        self.neighbors = [] if neighbors is None else neighbors
+
+    def __float__(self):
+        return float(self.estimate)
+
+    def increment(self, estimate):
+        self.estimate += estimate
+
+class Transition:
+    def __init__(self, action, reward=0, probability=1):
+        self.action = action
+        self.reward = reward
+        self.probability = probability
 
 class Grid:
     def __init__(self, rows, columns=None):
         if columns is None:
             columns = rows
 
-        self.width = columns
-        self.current = None
-        self.grid = [ Action() for _ in range(rows * columns) ]
+        self.ptr = None
+        self.grid = []
+
+        for _ in range(rows):
+            self.grid.append([ Action() for _ in range(columns) ])
 
         for (coordinate, action) in np.ndenumerate(self.grid):
             for f in navigator():
                 (x, y) = f(*coordinate)
-                inbounds = 0 <= x < rows and 0 <= y < columns
-                ptr = self.get(x, y) if inbounds else None
-                action.neighborhood.append(ptr)
+                if 0 <= x < rows and 0 <= y < columns:
+                    trans = Transition(self.grid[x][y])
+                else:
+                    trans = Transition(None, -1)
+                action.neighbors.append(trans)
 
-    def get(self, row, column):
-        return self.grid[row * self.width + column]
+        for (_, action) in np.ndenumerate(self.grid):
+            for i in action.neighbors:
+                i.probability = 1 / len(action.neighbors)
 
-    def __iter__(self):
-        self.current = random.choice(self.grid)
-        return self
+    def __str__(self):
+        sep = ('+-' + '-' * 6) * len(self.grid[0]) + '+'
+        table = [ sep ]
 
-    def __next__(self):
-        action = random.choice(self.current.neighborhood)
+        for row in self.grid:
+            line = map('{0:5.2f}'.format, map(float, row))
+            table.extend([
+                '| ' + ' | '.join(line) + ' |',
+                sep
+            ])
 
-        if action is None:
-            reward = -1
-        else:
-            reward = self.current.reward
-            self.current = action
+        return '\n'.join(table)
 
-        return Step(reward, self.current)
+    # def __next__(self):
+    #     off = self.on
+    #     transition = random.choice(self.on.neighbors)
+
+    #     if transition.action is None:
+    #         reward = -1
+    #     else:
+    #         reward = transition.reward
+    #         self.on = transition.action
+
+    #     return (off, reward, self.on)
+
+    def walk(self):
+        for (coordinate, action) in np.ndenumerate(self.grid):
+            print(coordinate)
+            est = action.estimate
+            for transition in action.neighbors:
+                if transition.action is None:
+                    estimate = est
+                else:
+                    estimate = transition.action.estimate
+                yield (action, transition, estimate)
