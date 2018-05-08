@@ -1,86 +1,67 @@
 import random
 import itertools as it
-
-import numpy as np
+import collections as cl
 
 def navigator():
     for (i, j) in it.permutations(range(-1, 2), 2):
         if not i or not j:
             yield lambda x, y: (x + i, y + j)
 
-class Action:
-    def __init__(self, neighbors=None):
+Action = cl.namedtuple('Action', 'state, reward')
+State_ = cl.namedtuple('State_', 'x, y')
+
+class State(State_):
+    def __new__(cls, x, y):
+        return super(State, cls).__new__(cls, x, y)
+
+    def __lt__(self, other):
+        return self.x < other.x or self.y < other.y
+
+    def inbounds(self, xbound, ybound):
+        return 0 <= self.x < xbound and 0 <= self.y < ybound
+
+class Estimate(State):
+    def __init__(self, x, y):
+        super().__init__(self, x, y)
         self.estimate = 0
-        self.neighbors = [] if neighbors is None else neighbors
-
-    def __float__(self):
-        return float(self.estimate)
-
-    def increment(self, estimate):
-        self.estimate += estimate
-
-class Transition:
-    def __init__(self, action, reward=0, probability=1):
-        self.action = action
-        self.reward = reward
-        self.probability = probability
 
 class Grid:
-    def __init__(self, rows, columns=None):
+    def __init__(self, rows, columns=None, S=State):
         if columns is None:
             columns = rows
 
-        self.ptr = None
-        self.grid = []
+        self.S = S
+        self.grid = cl.defaultdict(list)
 
-        for _ in range(rows):
-            self.grid.append([ Action() for _ in range(columns) ])
+        for m in range(rows):
+            for n in range(columns):
+                s = self.S(m, n)
+                for f in navigator():
+                    t = self.S(*f(s.x, s.y))
+                    if t.inbounds(rows, columns):
+                        a = Action(t, 0)
+                    else:
+                        a = Action(s, -1)
+                    self.grid[s].append(a)
 
-        for (coordinate, action) in np.ndenumerate(self.grid):
-            for f in navigator():
-                (x, y) = f(*coordinate)
-                if 0 <= x < rows and 0 <= y < columns:
-                    trans = Transition(self.grid[x][y])
-                else:
-                    trans = Transition(None, -1)
-                action.neighbors.append(trans)
+    def __iter__(self):
+        for s in sorted(self.grid.keys()):
+            for t in self.grid[s]:
+                yield (s, t)
 
-        for (_, action) in np.ndenumerate(self.grid):
-            for i in action.neighbors:
-                i.probability = 1 / len(action.neighbors)
+    def walk(self, state=None):
+        if state is None:
+            state = self.S(0, 0)
 
-    def __str__(self):
-        sep = ('+-' + '-' * 6) * len(self.grid[0]) + '+'
-        table = [ sep ]
+        while True:
+            position = self.grid[state.x][state.y]
+            s = random.choice(position)
+            yield s.reward
+            state = s.state
 
-        for row in self.grid:
-            line = map('{0:5.2f}'.format, map(float, row))
-            table.extend([
-                '| ' + ' | '.join(line) + ' |',
-                sep
-            ])
+class SpecialGrid(Grid):
+    def __init__(self):
+        super().__init__(5)
 
-        return '\n'.join(table)
-
-    # def __next__(self):
-    #     off = self.on
-    #     transition = random.choice(self.on.neighbors)
-
-    #     if transition.action is None:
-    #         reward = -1
-    #     else:
-    #         reward = transition.reward
-    #         self.on = transition.action
-
-    #     return (off, reward, self.on)
-
-    def walk(self):
-        for (coordinate, action) in np.ndenumerate(self.grid):
-            print(coordinate)
-            est = action.estimate
-            for transition in action.neighbors:
-                if transition.action is None:
-                    estimate = est
-                else:
-                    estimate = transition.action.estimate
-                yield (action, transition, estimate)
+        self.grid[State(0, 1)] = [ Action(self.grid[State(4, 1)], 10) ]
+        self.grid[State(0, 3)] = [ Action(self.grid[State(2, 3)],  5) ]
