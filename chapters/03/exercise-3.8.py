@@ -34,9 +34,6 @@ class Estimate(list):
 
         return diff
 
-    def update(self, state, value):
-        self[state.x][state.y] = value
-
 arguments = ArgumentParser()
 arguments.add_argument('--discount', type=float)
 arguments.add_argument('--speed', type=float, default=0.5)
