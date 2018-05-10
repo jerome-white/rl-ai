@@ -15,7 +15,7 @@ class State(State_):
         return super(State, cls).__new__(cls, x, y)
 
     def __lt__(self, other):
-        return self.x < other.x or self.y < other.y
+        return self.x < other.x and self.y < other.y
 
     def inbounds(self, xbound, ybound):
         return 0 <= self.x < xbound and 0 <= self.y < ybound
