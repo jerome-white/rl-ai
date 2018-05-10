@@ -20,10 +20,16 @@ class State(State_):
     def inbounds(self, xbound, ybound):
         return 0 <= self.x < xbound and 0 <= self.y < ybound
 
+    def __str__(self):
+        return '{0},{1}'.format(self.x, self.y)
+
 class Estimate(State):
     def __init__(self, x, y):
         super().__init__(self, x, y)
         self.estimate = 0
+
+    def __str__(self):
+        return '{0:5.2f}'.format(self.estimate)
 
 class Grid:
     def __init__(self, rows, columns=None, S=State):
