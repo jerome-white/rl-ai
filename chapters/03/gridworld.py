@@ -2,11 +2,6 @@ import random
 import itertools as it
 import collections as cl
 
-def navigator():
-    for (i, j) in it.permutations(range(-1, 2), 2):
-        if not i or not j:
-            yield lambda x, y: (x + i, y + j)
-
 Action = cl.namedtuple('Action', 'state, reward')
 State_ = cl.namedtuple('State_', 'x, y')
 
@@ -26,6 +21,11 @@ class State(State_):
     def inbounds(self, xbound, ybound):
         return 0 <= self.x < xbound and 0 <= self.y < ybound
 
+    def neighbors(self):
+        for (i, j) in it.permutations(range(-1, 2), 2):
+            if not i or not j:
+                yield type(self)(self.x + i, self.y + j)
+
 class Grid:
     def __init__(self, rows, columns=None):
         if columns is None:
@@ -36,8 +36,7 @@ class Grid:
         for m in range(rows):
             for n in range(columns):
                 s = State(m, n)
-                for f in navigator():
-                    t = State(*f(s.x, s.y))
+                for t in s.neighbors():
                     if t.inbounds(rows, columns):
                         a = Action(t, 0)
                     else:
