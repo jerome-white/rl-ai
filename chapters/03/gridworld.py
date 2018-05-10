@@ -55,6 +55,28 @@ class Grid:
             for t in self.grid[s]:
                 yield (s, t)
 
+    def __str__(self):
+        x = None
+        row = []
+        table = []
+
+        for s in sorted(self.grid.keys()):
+            cell = str(s)
+
+            if x is None:
+                x = s.x
+            if x != s.x:
+                table.append('  '.join(row))
+                row = []
+                x = s.x
+
+            row.append(cell)
+
+        if row:
+            table.append('  '.join(row))
+
+        return '\n\n'.join(table)
+
     def walk(self, state=None):
         if state is None:
             state = self.S(0, 0)
