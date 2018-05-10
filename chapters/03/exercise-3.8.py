@@ -39,6 +39,7 @@ class Estimate(list):
 
 arguments = ArgumentParser()
 arguments.add_argument('--discount', type=float)
+arguments.add_argument('--speed', type=float, default=0.5)
 args = arguments.parse_args()
 
 grid = gw.SpecialGrid()
@@ -57,6 +58,6 @@ while True:
 
     os.system('clear')
     print(before, before - after, sep='\n')
-    time.sleep(0.5)
+    time.sleep(args.speed)
 
     before = after
