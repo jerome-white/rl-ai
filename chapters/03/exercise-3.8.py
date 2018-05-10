@@ -1,30 +1,64 @@
 import os
 import time
-import itertools as it
 from argparse import ArgumentParser
 
-import numpy as np
+import gridworld as gw
 
-from gridworld import Grid, Action, Transition
+class Estimate(list):
+    def __init__(self, rows, columns=None):
+        if columns is None:
+            columns = rows
+
+        for m in range(rows):
+            self.append([ 0 ] * columns)
+
+    def __str__(self):
+        table = []
+        sep = ('+' + '-' * 7) * len(self[0]) + '+'
+
+        for row in self:
+            line = [ '{0:5.2f}'.format(x) for x in row ]
+            table.extend([
+                sep,
+                '| ' + ' | '.join(line) + ' |',
+            ])
+        if table:
+            table.append(sep)
+
+        return '\n'.join(table)
+
+    def __sub__(self, other):
+        diff = 0
+
+        for (i, j) in zip(self, other):
+            for (x, y) in zip(i, j):
+                diff += x - y
+
+        return diff
+
+    def update(self, state, value):
+        self[state.x][state.y] = value
 
 arguments = ArgumentParser()
 arguments.add_argument('--discount', type=float)
 args = arguments.parse_args()
 
-grid = Grid(5)
-grid.grid[0][1] = Action([ Transition(grid.grid[4][1], 10) ])
-grid.grid[0][3] = Action([ Transition(grid.grid[2][3], 5) ])
+grid = gw.SpecialGrid()
+before = Estimate(5)
 
-for i in it.count():
-    diff = 0
-    for (ac, tr, rw) in grid.walk():
-        estimate = tr.probability * (tr.reward + args.discount * rw)
-        diff += abs(estimate - ac.estimate)
-        ac.estimate += estimate
-        print(tr.probability,'* (',tr.reward,'+',args.discount,'*',rw,') :',
-              estimate, ac.estimate)
-    print(grid, i, diff, sep='\n')
-    # time.sleep(0.5)    
-    # os.system('clear')
-    if i > 3:
-        break
+while True:
+    after = Estimate(5)
+
+    for (state, actions) in grid:
+        p = 1 / len(actions)
+        estimate = 0
+        for a in actions:
+            est = before[a.state.x][a.state.y]
+            estimate += p * (a.reward + args.discount * est)
+        after[state.x][state.y] = estimate
+
+    os.system('clear')
+    print(before, before - after, sep='\n')
+    time.sleep(0.5)
+
+    before = after
