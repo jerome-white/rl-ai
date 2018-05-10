@@ -5,10 +5,8 @@ from argparse import ArgumentParser
 import gridworld as gw
 
 class Estimate(list):
-    def __init__(self, rows, columns=None):
-        if columns is None:
-            columns = rows
-
+    def __init__(self, dimensions):
+        (rows, columns) = dimensions
         for m in range(rows):
             self.append([ 0 ] * columns)
 
@@ -44,10 +42,10 @@ arguments.add_argument('--discount', type=float)
 args = arguments.parse_args()
 
 grid = gw.SpecialGrid()
-before = Estimate(5)
+before = Estimate(grid.dimensions)
 
 while True:
-    after = Estimate(5)
+    after = Estimate(grid.dimensions)
 
     for (state, actions) in grid:
         p = 1 / len(actions)

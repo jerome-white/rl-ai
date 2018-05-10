@@ -43,6 +43,8 @@ class Grid:
                         a = Action(s, -1)
                     self.grid[s].append(a)
 
+        self.dimensions = (rows, columns)
+
     def __iter__(self):
         for s in sorted(self.grid.keys()):
             yield (s, self.grid[s])
