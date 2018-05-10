@@ -17,33 +17,27 @@ class State(State_):
     def __lt__(self, other):
         return self.x < other.x and self.y < other.y
 
-    def inbounds(self, xbound, ybound):
-        return 0 <= self.x < xbound and 0 <= self.y < ybound
-
     def __str__(self):
         return '{0},{1}'.format(self.x, self.y)
 
-class Estimate(State):
-    def __init__(self, x, y):
-        super().__init__(self, x, y)
-        self.estimate = 0
+    def __repr__(self):
+        return str(self)
 
-    def __str__(self):
-        return '{0:5.2f}'.format(self.estimate)
+    def inbounds(self, xbound, ybound):
+        return 0 <= self.x < xbound and 0 <= self.y < ybound
 
 class Grid:
-    def __init__(self, rows, columns=None, S=State):
+    def __init__(self, rows, columns=None):
         if columns is None:
             columns = rows
 
-        self.S = S
         self.grid = cl.defaultdict(list)
 
         for m in range(rows):
             for n in range(columns):
-                s = self.S(m, n)
+                s = State(m, n)
                 for f in navigator():
-                    t = self.S(*f(s.x, s.y))
+                    t = State(*f(s.x, s.y))
                     if t.inbounds(rows, columns):
                         a = Action(t, 0)
                     else:
@@ -52,34 +46,11 @@ class Grid:
 
     def __iter__(self):
         for s in sorted(self.grid.keys()):
-            for t in self.grid[s]:
-                yield (s, t)
-
-    def __str__(self):
-        x = None
-        row = []
-        table = []
-
-        for s in sorted(self.grid.keys()):
-            cell = str(s)
-
-            if x is None:
-                x = s.x
-            if x != s.x:
-                table.append('  '.join(row))
-                row = []
-                x = s.x
-
-            row.append(cell)
-
-        if row:
-            table.append('  '.join(row))
-
-        return '\n\n'.join(table)
+            yield (s, self.grid[s])
 
     def walk(self, state=None):
         if state is None:
-            state = self.S(0, 0)
+            state = State(0, 0)
 
         while True:
             position = self.grid[state.x][state.y]
