@@ -91,5 +91,5 @@ class SpecialGrid(Grid):
     def __init__(self):
         super().__init__(5)
 
-        self.grid[State(0, 1)] = [ Action(self.grid[State(4, 1)], 10) ]
-        self.grid[State(0, 3)] = [ Action(self.grid[State(2, 3)],  5) ]
+        self.grid[State(0, 1)] = [ Action(State(4, 1), 10) ]
+        self.grid[State(0, 3)] = [ Action(State(2, 3),  5) ]
