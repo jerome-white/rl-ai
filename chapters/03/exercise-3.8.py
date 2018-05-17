@@ -11,11 +11,14 @@ class Estimate(list):
             self.append([ 0 ] * columns)
 
     def __str__(self):
+        sep = None
         table = []
-        sep = ('+' + '-' * 7) * len(self[0]) + '+'
 
         for row in self:
             line = [ '{0:5.2f}'.format(x) for x in row ]
+            if sep is None:
+                width = len(line[0]) + 2
+                sep = ('+' + '-' * width) * len(self[0]) + '+'
             table.extend([
                 sep,
                 '| ' + ' | '.join(line) + ' |',
