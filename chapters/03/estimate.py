@@ -35,3 +35,32 @@ class Estimate(list):
         for a in actions:
             est = self[a.state.x][a.state.y]
             yield probability * (a.reward + discount * est)
+
+class BackupSolver:
+    def __init__(self, grid, discount):
+        self.grid = grid
+        self.discount = discount
+        self.before = None
+
+    def __iter__(self):
+        self.before = Estimate(self.grid.dimensions)
+        return self
+
+    def __next__(self):
+        before = self.before
+        after = Estimate(self.grid.dimensions)
+
+        for (state, actions) in self.grid:
+            prob = self.probability(actions)
+            estimate = before.estimates(actions, self.discount, prob)
+            after[state.x][state.y] = self.collect(estimate)
+
+        self.before = after
+
+        return (before, before - after)
+
+    def probability(self, actions):
+        raise NotImplementedError()
+
+    def collect(self, actions):
+        raise NotImplementedError()
