@@ -1,8 +1,8 @@
 class Estimate(list):
-    def __init__(self, dimensions):
+    def __init__(self, dimensions, init=0):
         (rows, columns) = dimensions
         for m in range(rows):
-            self.append([ 0 ] * columns)
+            self.append([ init ] * columns)
 
     def __str__(self):
         sep = None
@@ -31,11 +31,6 @@ class Estimate(list):
 
         return diff
 
-    def estimates(self, actions, discount, probability=1):
-        for a in actions:
-            est = self[a.state.x][a.state.y]
-            yield probability * (a.reward + discount * est)
-
 class BackupSolver:
     def __init__(self, grid, discount):
         self.grid = grid
@@ -47,17 +42,22 @@ class BackupSolver:
         return self
 
     def __next__(self):
-        before = self.before
         after = Estimate(self.grid.dimensions)
 
         for (state, actions) in self.grid:
-            prob = self.probability(actions)
-            estimate = before.estimates(actions, self.discount, prob)
-            after[state.x][state.y] = self.collect(estimate)
+            estimates = self.bellman(actions)
+            after[state.x][state.y] = self.collect(estimates)
 
+        before = self.before
         self.before = after
 
         return (before, before - after)
+
+    def bellman(self, actions):
+        p = self.probability(actions)
+        for a in actions:
+            est = self.before[a.state.x][a.state.y]
+            yield p * (a.reward + self.discount * est)
 
     def probability(self, actions):
         raise NotImplementedError()
