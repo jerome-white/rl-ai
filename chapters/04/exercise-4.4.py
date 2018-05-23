@@ -29,27 +29,6 @@ class Location:
     def poisson(lam, n):
         return lam ** n / math.factorial(n) * math.e ** -lam
 
-def irange(stop):
-    yield from range(stop + 1)
-
-def states(capacity, locations):
-    product = it.product(irange(capacity), repeat=locations)
-
-    yield from it.starmap(State, product)
-
-def actions(cars, capacity, movable):
-    try:
-        iter(movable)
-    except TypeError:
-        movable = (movable, )
-
-    rentable = range(-capacity, 1)
-    returnable = irange(capacity)
-
-    for i in it.starmap(Dynamic, it.product(rentable, returnable, movable)):
-        if capacity - sum(i) == cars:
-            yield i
-
 class Policy:
     def __init__(self, capacity, movable, profit, cost):
         self.capacity = capacity
@@ -71,6 +50,27 @@ class Policy:
                 state_ = State(first_, state.second - i.moved)
 
                 yield Action(prob, reward, state_)
+
+def irange(stop):
+    yield from range(stop + 1)
+
+def states(capacity, locations):
+    product = it.product(irange(capacity), repeat=locations)
+
+    yield from it.starmap(State, product)
+
+def actions(cars, capacity, movable):
+    try:
+        iter(movable)
+    except TypeError:
+        movable = (movable, )
+
+    rentable = range(-capacity, 1)
+    returnable = irange(capacity)
+
+    for i in it.starmap(Dynamic, it.product(rentable, returnable, movable)):
+        if capacity - sum(i) == cars:
+            yield i
 
 arguments = ArgumentParser()
 arguments.add_argument('--config', type=Path)
