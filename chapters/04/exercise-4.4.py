@@ -32,8 +32,10 @@ class Location:
 def irange(stop):
     yield from range(stop + 1)
 
-def states(capacity):
-    yield from it.starmap(State, it.product(irange(capacity), repeat=2))
+def states(capacity, locations):
+    product = it.product(irange(capacity), repeat=locations)
+
+    yield from it.starmap(State, product)
 
 def actions(cars, capacity, movable):
     try:
@@ -48,42 +50,60 @@ def actions(cars, capacity, movable):
         if capacity - sum(i) == cars:
             yield i
 
-def evaluate(state, first, second):
-    for i in actions(state.first, 20, irange(5)):
-        first_ = state.first + i.moved
-        partial_reward = 10 * abs(i.rented) - 2 * i.moved
+class Policy:
+    def __init__(self, capacity, movable, profit, cost):
+        self.capacity = capacity
+        self.movable = movable
+        self.profit = profit
+        self.cost = cost
 
-        for j in actions(state.second, 20, -i.moved):
-            logging.debug('{0} {1}'.format(state.first, i))
-            logging.debug('{0} {1}'.format(state.second, j))
+    def evaluate(self, state, first, second):
+        for i in actions(state.first, self.capacity, irange(self.movable)):
+            first_ = state.first + i.moved
+            partial_reward = self.profit * abs(i.rented) + self.cost * i.moved
 
-            prob = first.prob(i) * second.prob(j)
-            reward = partial_reward + 10 * abs(j.rented)
-            state_ = State(first_, state.second - i.moved)
+            for j in actions(state.second, self.capacity, -i.moved):
+                logging.debug('{0} {1}'.format(state.first, i))
+                logging.debug('{0} {1}'.format(state.second, j))
 
-            yield Action(prob, reward, state_)
+                prob = first.prob(i) * second.prob(j)
+                reward = partial_reward + self.profit * abs(j.rented)
+                state_ = State(first_, state.second - i.moved)
 
-first = Location(3, 3)
-second = Location(4, 2)
-for s in states(20):
-    for e in evaluate(s, first, second):
+                yield Action(prob, reward, state_)
+
+arguments = ArgumentParser()
+arguments.add_argument('--config', type=Path)
+arguments.add_argument('--discount', type=float)
+args = arguments.parse_args()
+
+config = ConfigParser()
+config.read(args.config)
+
+# Convert configuration options to integers
+env = cl.defaultdict(dict)
+for (i, j) in config.items():
+    for (k, v) in j.items():
+        env[i][k] = int(v)
+
+capacity = env['system']['capacity']
+
+# Establish setup objects
+policy = Policy(capacity,
+                env['system']['movable'],
+                env['cost']['rental'],
+                env['cost']['move'])
+
+locations = []
+for (i, j) in env.items():
+    if i.startswith('location:'):
+        loc = Location(j['requests'], j['returns'])
+        locations.append(loc)
+
+# run
+for s in states(capacity, len(locations)):
+    for e in policy.evaluate(s, *locations):
         print(e)
-
-# arguments = ArgumentParser()
-# arguments.add_argument('--config', type=Path)
-# arguments.add_argument('--discount', type=float)
-# args = arguments.parse_args()
-
-# config = ConfigParser()
-# config.read(args.config)
-
-# env = cl.defaultdict(dict)
-# for (i, j) in config.items():
-#     for (k, v) in j.items():
-#         env[i][k] = float(v)
-
-# syscfg = env['system']
-# system = System(syscfg['capacity'], syscfg['movable'], 2)
 
 # while True:
 #     # policy evaluation
