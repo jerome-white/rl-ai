@@ -32,12 +32,12 @@ class Location:
 class Policy:
     def __init__(self, capacity, movable, profit, cost):
         self.capacity = capacity
-        self.movable = movable
+        self.movable = range(-movable, movable + 1)
         self.profit = profit
         self.cost = cost
 
     def evaluate(self, state, first, second):
-        for i in actions(state.first, self.capacity, irange(self.movable)):
+        for i in actions(state.first, self.capacity, self.movable):
             first_ = state.first + i.moved
             partial_reward = self.profit * abs(i.rented) + self.cost * i.moved
 
