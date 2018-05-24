@@ -63,11 +63,8 @@ class Bellman:
             existing = estimate[e.state.first][e.state.second]
             yield e.prob * (e.reward + self.discount * existing)
 
-def irange(stop):
-    yield from range(stop + 1)
-
 def states(capacity, locations):
-    product = it.product(irange(capacity), repeat=locations)
+    product = it.product(range(capacity + 1), repeat=locations)
 
     yield from it.starmap(State, product)
 
@@ -78,7 +75,7 @@ def actions(cars, capacity, movable):
         movable = (movable, )
 
     rentable = range(-capacity, 1)
-    returnable = irange(capacity)
+    returnable = range(capacity + 1)
 
     for i in it.starmap(Dynamic, it.product(rentable, returnable, movable)):
         if capacity - sum(i) == cars:
