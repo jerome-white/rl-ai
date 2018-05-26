@@ -129,7 +129,7 @@ while not stable:
     #
     # policy evaluation
     #
-    logging.info('evaluation')
+    logging.info('policy evaluation')
 
     delta = np.inf
     while delta > args.improvement_threshold:
@@ -138,13 +138,13 @@ while not stable:
             a = actions.at(s, policy[s])
             values_[s] = bellman(a, values, args.discount)
         delta = np.sum(np.abs(values_ - values))
-        logging.info(delta)
+        logging.info('delta {0}'.format(delta))
         values = values_
 
     #
     # policy improvement
     #
-    logging.info('improvement')
+    logging.info('policy improvement')
 
     stable = True
     for s in states:
