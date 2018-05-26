@@ -119,7 +119,7 @@ actions = Actions(capacity,
                   movable)
 
 values = np.zeros((capacity, ) * len(locations))
-policy = np.zeros_like(values)
+policy = np.zeros_like(values, int)
 
 #
 # Run!
