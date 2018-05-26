@@ -1,5 +1,6 @@
 import math
 import logging
+import operator as op
 import itertools as it
 import collections as cl
 from pathlib import Path
@@ -17,51 +18,46 @@ logging.basicConfig(level=logging.INFO,
 
 State = cl.namedtuple('State', 'first, second')
 Action = cl.namedtuple('Action', 'prob, reward, state')
-Inventory = cl.namedtuple('Inventory', 'rented, returned, moved')
+Inventory = cl.namedtuple('Inventory', 'rented, returned')
 
 class Location:
     def __init__(self, rentals, returns):
-        self.rentals = rentals
-        self.returns = returns
+        self.params = (rentals, returns)
 
-    def prob(self, dynamic):
-        rentals = poisson(self.rentals, abs(dynamic.rented))
-        returned = poisson(self.returns, dynamic.returned)
-
-        return rentals * returned
+    def prob(self, inventory):
+        return op.mul(*it.starmap(poisson, zip(self.params, inventory)))
 
 class Actions:
     def __init__(self, capacity, locations, profit, cost, movable):
         self.capacity = capacity
-        (self.first, self.second) = locations
         self.profit = profit
         self.cost = cost
         self.movable = movable
+        (self.first, self.second) = locations
 
     def __iter__(self):
         yield from range(-self.movable, self.movable + 1)
 
     def positions(self, cars, moves):
-        rents = range(-self.capacity, 1)
-        returns = range(self.capacity + 1)
-
-        for i in it.product(rents, returns):
-            inventory = Inventory(*i, moves)
-            if self.capacity - sum(inventory) == cars:
-                yield inventory
+        product = it.product(range(self.capacity + 1),
+                             range(self.capacity + 1))
+        for i in it.starmap(Inventory, product):
+            total = i.returned - i.rented + moves
+            if self.capacity - total == cars:
+                yield i
 
     def at(self, state, moves):
         for i in self.positions(state.first, moves):
-            first_ = state.first + i.moved
-            partial_reward = self.profit * abs(i.rented) + self.cost * i.moved
+            f = state.first + moves
+            p = self.first.prob(i)
+            r = self.profit * i.returned + self.cost * abs(moves)
 
-            for j in self.positions(state.second, -i.moved):
-                logging.debug('{0} {1}'.format(state.first, i))
-                logging.debug('{0} {1}'.format(state.second, j))
+            for j in self.positions(state.second, -moves):
+                s = state.second - moves
 
-                prob = self.first.prob(i) * self.second.prob(j)
-                reward = partial_reward + self.profit * abs(j.rented)
-                state_ = State(first_, state.second - i.moved)
+                prob = p * self.second.prob(j)
+                reward = r + self.profit * j.returned
+                state_ = State(f, s)
 
                 yield Action(prob, reward, state_)
 
