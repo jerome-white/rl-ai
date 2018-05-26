@@ -29,57 +29,55 @@ class Location:
     def poisson(lam, n):
         return lam ** n / math.factorial(n) * math.e ** -lam
 
-class Policy:
-    def __init__(self, capacity, movable, profit, cost):
+class Actions:
+    def __init__(self, capacity, locations, profit, cost, movable):
         self.capacity = capacity
-        self.movable = range(-movable, movable + 1)
+        (self.first, self.second) = locations
         self.profit = profit
         self.cost = cost
+        self.movable
 
-    def evaluate(self, state, first, second):
-        for i in actions(state.first, self.capacity, self.movable):
+    def __iter__(self):
+        yield from range(-self.movable, self.movable + 1)
+
+    def positions(self, cars, moves):
+        rents = range(-self.capacity, 1)
+        returns = range(self.capacity + 1)
+
+        for i in it.product(rents, returns):
+            d = Dynamic(*i, moves)
+            if self.capacity - sum(d) == cars:
+                yield i
+
+    def at(self, state, moves):
+        for i in self.positions(state.first, moves):
             first_ = state.first + i.moved
             partial_reward = self.profit * abs(i.rented) + self.cost * i.moved
 
-            for j in actions(state.second, self.capacity, -i.moved):
+            for j in self.positions(state.second, -i.moved):
                 logging.debug('{0} {1}'.format(state.first, i))
                 logging.debug('{0} {1}'.format(state.second, j))
 
-                prob = first.prob(i) * second.prob(j)
+                prob = self.first.prob(i) * self.second.prob(j)
                 reward = partial_reward + self.profit * abs(j.rented)
                 state_ = State(first_, state.second - i.moved)
 
                 yield Action(prob, reward, state_)
 
-class Bellman:
-    def __init__(self, policy, discount, first, second):
-        self.policy = policy
-        self.discount = discount
-        self.first = first
-        self.second = second
+class States:
+    def __init__(self, capacity, locations):
+        self.product = it.product(range(capacity + 1), repeat=len(locations))
 
-    def evaluate(state, estimate):
-        for e in self.policy.evaluate(state, self.first, self.second):
-            existing = estimate[e.state.first][e.state.second]
-            yield e.prob * (e.reward + self.discount * existing)
+    def __iter__(self):
+        yield from it.starmap(State, self.product)
 
-def states(capacity, locations):
-    product = it.product(range(capacity + 1), repeat=locations)
+def bellman(actions, estimate, discount):
+    value = 0
 
-    yield from it.starmap(State, product)
+    for a in actions:
+        value += a.prob * (a.reward + discount * estimate[a.state])
 
-def actions(cars, capacity, movable):
-    try:
-        iter(movable)
-    except TypeError:
-        movable = (movable, )
-
-    rentable = range(-capacity, 1)
-    returnable = range(capacity + 1)
-
-    for i in it.starmap(Dynamic, it.product(rentable, returnable, movable)):
-        if capacity - sum(i) == cars:
-            yield i
+    return value
 
 arguments = ArgumentParser()
 arguments.add_argument('--config', type=Path)
@@ -90,15 +88,20 @@ args = arguments.parse_args()
 config = ConfigParser()
 config.read(args.config)
 
+#
 # Convert configuration options to integers
+#
 env = cl.defaultdict(dict)
 for (i, j) in config.items():
     for (k, v) in j.items():
         env[i][k] = int(v)
 
 capacity = env['system']['capacity']
+movable = env['system']['movable']
 
+#
 # Establish setup objects
+#
 policy = Policy(capacity,
                 env['system']['movable'],
                 env['cost']['rental'],
@@ -110,29 +113,47 @@ for (i, j) in env.items():
         loc = Location(j['requests'], j['returns'])
         locations.append(loc)
 
-# run
-for s in states(capacity, len(locations)):
-    for e in policy.evaluate(s, *locations):
-        print(e)
+#
+# Object initialization
+#
+states = States(capacity, locations)
+actions = Actions(capacity,
+                  locations,
+                  env['cost']['rental'],
+                  env['cost']['move'],
+                  movable)
 
-bellman = Bellman(policy, args.discount, *locations)
-backup = np.zeros()
+values = np.zeros((capacity, ) * len(locations))
+policy = np.zeros_like(values)
 
-while True:
+#
+# Run!
+#
+stable = False
+
+while not stable:
     #
     # policy evaluation
     #
-    delta = None
+    delta = np.inf
 
-    while delta is None or delta > args.improvement_threshold:
-        backup_ = np.zeros()
+    while delta > args.improvement_threshold:
+        values_ = np.zeros_like(values)
         for s in states:
-            rewards = bellman.evaluate(s, backup)
-            backup_[s.first][s.second] = sum(rewards)
-        delta = np.sum(np.abs(backup_ - backup))
-        backup = backup_
+            a = actions.at(s, policy[s])
+            values_[s] = bellman(a, values, args.discount)
+        delta = np.sum(np.abs(values_ - values))
+        values = values_
 
+    #
     # policy improvement
+    #
     stable = True
+
     for s in states:
-        b = pi(s)
+        optimal = np.argmax([
+            bellman(actions.at(s, x), values, args.discount) for x in actions
+        ])
+        if policy[s] != optimal:
+            policy[s] = optimal
+            stable = False
