@@ -100,11 +100,6 @@ movable = env['system']['movable']
 #
 # Establish setup objects
 #
-policy = Policy(capacity,
-                env['system']['movable'],
-                env['cost']['rental'],
-                env['cost']['move'])
-
 locations = []
 for (i, j) in env.items():
     if i.startswith('location:'):
