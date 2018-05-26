@@ -7,6 +7,9 @@ from argparse import ArgumentParser
 from configparser import ConfigParser
 
 import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+from matplotlib.animation import ArtistAnimation
 
 logging.basicConfig(level=logging.INFO,
                     format='[ %(asctime)s ] %(levelname)s: %(message)s',
@@ -120,6 +123,7 @@ actions = Actions(capacity,
 
 values = np.zeros((capacity + 1, ) * len(locations))
 policy = np.zeros_like(values, int)
+evolution = []
 
 #
 # Run!
@@ -141,6 +145,8 @@ while not stable:
         logging.info('delta {0}'.format(delta))
         values = values_
 
+    evolution.append([ sns.heatmap(values, vmin=-movable, vmax=movable) ])
+
     #
     # policy improvement
     #
@@ -155,3 +161,6 @@ while not stable:
             logging.info('not stable')
             policy[s] = optimal
             stable = False
+
+ani = ArtistAnimation(plt.gcf(), evolution, interval=50, blit=True)
+ani.save('exercise-4.4.mp4')
