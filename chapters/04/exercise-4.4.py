@@ -6,6 +6,8 @@ from pathlib import Path
 from argparse import ArgumentParser
 from configparser import ConfigParser
 
+import numpy as np
+
 logging.basicConfig(level=logging.INFO,
                     format='[ %(asctime)s ] %(levelname)s: %(message)s',
                     datefmt='%H:%M:%S')
@@ -31,7 +33,7 @@ class Actions:
         (self.first, self.second) = locations
         self.profit = profit
         self.cost = cost
-        self.movable
+        self.movable = movable
 
     def __iter__(self):
         yield from range(-self.movable, self.movable + 1)
@@ -127,7 +129,7 @@ while not stable:
     #
     # policy evaluation
     #
-    log.info('evaluation')
+    logging.info('evaluation')
 
     delta = np.inf
     while delta > args.improvement_threshold:
@@ -136,13 +138,13 @@ while not stable:
             a = actions.at(s, policy[s])
             values_[s] = bellman(a, values, args.discount)
         delta = np.sum(np.abs(values_ - values))
-        log.info(delta)
+        logging.info(delta)
         values = values_
 
     #
     # policy improvement
     #
-    log.info('improvement')
+    logging.info('improvement')
 
     stable = True
     for s in states:
@@ -150,6 +152,6 @@ while not stable:
             bellman(actions.at(s, x), values, args.discount) for x in actions
         ])
         if policy[s] != optimal:
-            log.info('not stable')
+            logging.info('not stable')
             policy[s] = optimal
             stable = False
