@@ -118,7 +118,7 @@ actions = Actions(capacity,
                   env['cost']['move'],
                   movable)
 
-values = np.zeros((capacity, ) * len(locations))
+values = np.zeros((capacity + 1, ) * len(locations))
 policy = np.zeros_like(values, int)
 
 #
