@@ -132,6 +132,8 @@ while not stable:
     #
     # policy evaluation
     #
+    log.info('evaluation')
+
     delta = np.inf
     while delta > args.improvement_threshold:
         values_ = np.zeros_like(values)
@@ -139,16 +141,20 @@ while not stable:
             a = actions.at(s, policy[s])
             values_[s] = bellman(a, values, args.discount)
         delta = np.sum(np.abs(values_ - values))
+        log.info(delta)
         values = values_
 
     #
     # policy improvement
     #
+    log.info('improvement')
+
     stable = True
     for s in states:
         optimal = np.argmax([
             bellman(actions.at(s, x), values, args.discount) for x in actions
         ])
         if policy[s] != optimal:
+            log.info('not stable')
             policy[s] = optimal
             stable = False
