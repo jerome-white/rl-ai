@@ -12,7 +12,7 @@ logging.basicConfig(level=logging.INFO,
 
 State = cl.namedtuple('State', 'first, second')
 Action = cl.namedtuple('Action', 'prob, reward, state')
-Dynamic = cl.namedtuple('Dynamic', 'rented, returned, moved')
+Inventory = cl.namedtuple('Inventory', 'rented, returned, moved')
 
 class Location:
     def __init__(self, rentals, returns):
@@ -45,9 +45,9 @@ class Actions:
         returns = range(self.capacity + 1)
 
         for i in it.product(rents, returns):
-            d = Dynamic(*i, moves)
-            if self.capacity - sum(d) == cars:
-                yield i
+            inventory = Inventory(*i, moves)
+            if self.capacity - sum(inventory) == cars:
+                yield inventory
 
     def at(self, state, moves):
         for i in self.positions(state.first, moves):
