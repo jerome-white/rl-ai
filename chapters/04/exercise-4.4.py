@@ -20,14 +20,10 @@ class Location:
         self.returns = returns
 
     def prob(self, dynamic):
-        rentals = Location.poisson(self.rentals, abs(dynamic.rented))
-        returned = Location.poisson(self.returns, dynamic.returned)
+        rentals = poisson(self.rentals, abs(dynamic.rented))
+        returned = poisson(self.returns, dynamic.returned)
 
         return rentals * returned
-
-    @staticmethod
-    def poisson(lam, n):
-        return lam ** n / math.factorial(n) * math.e ** -lam
 
 class Actions:
     def __init__(self, capacity, locations, profit, cost, movable):
@@ -73,11 +69,13 @@ class States:
 
 def bellman(actions, estimate, discount):
     value = 0
-
     for a in actions:
         value += a.prob * (a.reward + discount * estimate[a.state])
 
     return value
+
+def poisson(lam, n):
+    return lam ** n / math.factorial(n) * math.e ** -lam
 
 arguments = ArgumentParser()
 arguments.add_argument('--config', type=Path)
