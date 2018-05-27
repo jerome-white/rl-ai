@@ -24,8 +24,20 @@ Inventory = cl.namedtuple('Inventory', 'rented, returned')
 Facility = cl.namedtuple('Facility',
                          'capacity, profit, cost, movable, locations')
 
+def poisson_(func):
+    computed = {}
+
+    def wrapper(lam, n):
+        key = (lam, n)
+        if key not in computed:
+            computed[key] = func(*key)
+        return computed[key]
+
+    return wrapper
+
+@poisson_
 def poisson(lam, n):
-    return lam ** n / math.factorial(n) * math.e ** -lam
+    return math.pow(lam, n) / math.factorial(n) * math.exp(-lam)
 
 def irange(stop):
     yield from range(stop + 1)
