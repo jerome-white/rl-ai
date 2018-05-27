@@ -9,7 +9,6 @@ from argparse import ArgumentParser
 from configparser import ConfigParser
 
 import numpy as np
-from matplotlib.animation import ArtistAnimation
 
 logging.basicConfig(level=logging.INFO,
                     format='[ %(asctime)s ] %(levelname)s: %(message)s',
