@@ -194,6 +194,7 @@ with mp.Pool(args.workers, bellman, initargs):
             for _ in range(jobs):
                 (t, r) = incoming.get()
                 if r > optimal:
+                    optimal = r
                     policy[s] = t.action
 
             if b != policy[s]:
