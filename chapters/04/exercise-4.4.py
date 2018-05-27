@@ -152,7 +152,7 @@ with mp.Pool(args.workers, bellman, initargs):
     # Run!
     #
     stable = False
-    for i in it.takewhile(lambda _: stable, it.count()):
+    for i in it.takewhile(lambda _: not stable, it.count()):
         logging.critical('iteration {0}'.format(i))
 
         #
