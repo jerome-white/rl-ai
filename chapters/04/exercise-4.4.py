@@ -20,6 +20,19 @@ State = cl.namedtuple('State', 'first, second')
 Action = cl.namedtuple('Action', 'prob, reward, state')
 Inventory = cl.namedtuple('Inventory', 'rented, returned')
 
+def bellman(actions, estimate, discount):
+    value = 0
+    for a in actions:
+        value += a.prob * (a.reward + discount * estimate[a.state])
+
+    return value
+
+def poisson(lam, n):
+    return lam ** n / math.factorial(n) * math.e ** -lam
+
+def irange(stop):
+    yield from range(stop + 1)
+
 class Location:
     def __init__(self, rentals, returns):
         self.params = (rentals, returns)
@@ -63,20 +76,12 @@ class Actions:
 
 class States:
     def __init__(self, capacity, locations):
-        self.product = it.product(range(capacity + 1), repeat=len(locations))
+        self.capacity = capacity
+        self.locations = locations
 
     def __iter__(self):
-        yield from it.starmap(State, self.product)
-
-def bellman(actions, estimate, discount):
-    value = 0
-    for a in actions:
-        value += a.prob * (a.reward + discount * estimate[a.state])
-
-    return value
-
-def poisson(lam, n):
-    return lam ** n / math.factorial(n) * math.e ** -lam
+        product = it.product(irange(self.capacity), repeat=len(self.locations))
+        yield from it.starmap(State, product)
 
 arguments = ArgumentParser()
 arguments.add_argument('--config', type=Path)
