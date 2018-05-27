@@ -141,16 +141,18 @@ while not stable:
     #
     logging.info('policy evaluation')
 
-    delta = np.inf
-    while delta > args.improvement_threshold:
+    while True:
         values_ = np.zeros_like(values)
         for s in states:
             a = actions.at(s, policy[s])
             values_[s] = bellman(a, values, args.discount)
         delta = np.sum(np.abs(values_ - values))
         logging.info('delta {0}'.format(delta))
-        values = values_
 
+        if delta < args.improvement_threshold:
+            break
+        values = values_
+    logging.info(values)
     evolution.append([ sns.heatmap(values, vmin=-movable, vmax=movable) ])
 
     #
