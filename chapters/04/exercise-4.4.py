@@ -25,8 +25,8 @@ Inventory = cl.namedtuple('Inventory', 'rented, returned')
 def poisson_(func):
     computed = {}
 
-    def wrapper(lam, n):
-        key = (lam, n)
+    def wrapper(n, lam):
+        key = (n, lam)
         if key not in computed:
             computed[key] = func(*key)
         return computed[key]
@@ -34,7 +34,7 @@ def poisson_(func):
     return wrapper
 
 @poisson_
-def poisson(lam, n):
+def poisson(n, lam):
     return math.pow(lam, n) / math.factorial(n) * math.exp(-lam)
 
 def irange(stop):
@@ -58,7 +58,7 @@ class Location:
         self.params = (rentals, returns)
 
     def probability(self, inventory):
-        return op.mul(*it.starmap(poisson, zip(inventory, self.params)))
+        return op.mul(*it.starmap(poisson, zip(self.params, inventory)))
 
 class Explorer:
     def __init__(self, env):
