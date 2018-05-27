@@ -38,8 +38,8 @@ def poisson(n, lam):
 def irange(stop):
     yield from range(stop + 1)
 
-def bellman(incoming, outgoing, facility, discount):
-    actions = Explorer(facility)
+def bellman(incoming, outgoing, env, discount):
+    actions = Explorer(env)
 
     while True:
         (t, v) = incoming.get()
