@@ -38,22 +38,22 @@ class Actions:
     def __iter__(self):
         yield from range(-self.movable, self.movable + 1)
 
-    def positions(self, cars, moves):
+    def positions(self, cars, moved):
         product = it.product(range(self.capacity + 1),
                              range(self.capacity + 1))
         for i in it.starmap(Inventory, product):
-            total = i.returned - i.rented + moves
-            if self.capacity - total == cars:
+            total = i.returned - (i.rented + moved)
+            if cars + total == self.capacity:
                 yield i
 
-    def at(self, state, moves):
-        for i in self.positions(state.first, moves):
-            f = state.first + moves
+    def at(self, state, moved):
+        for i in self.positions(state.first, moved):
+            f = state.first + moved
             p = self.first.prob(i)
-            r = self.profit * i.returned + self.cost * abs(moves)
+            r = self.profit * i.returned + self.cost * abs(moved)
 
-            for j in self.positions(state.second, -moves):
-                s = state.second - moves
+            for j in self.positions(state.second, -moved):
+                s = state.second - moved
 
                 prob = p * self.second.prob(j)
                 reward = r + self.profit * j.returned
