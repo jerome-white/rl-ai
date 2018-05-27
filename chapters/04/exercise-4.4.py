@@ -187,7 +187,7 @@ with mp.Pool(args.workers, bellman, initargs):
             if b != policy[s]:
                 stable = False
 
-        log.info('stable: {0}'.format(stable))
+        logging.info('stable: {0}'.format(stable))
 
 ani = ArtistAnimation(plt.gcf(), evolution, interval=50, blit=True)
 ani.save('exercise-4.4.mp4')
