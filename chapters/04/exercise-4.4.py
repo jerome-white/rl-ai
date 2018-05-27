@@ -19,7 +19,6 @@ logging.basicConfig(level=logging.INFO,
 
 State = cl.namedtuple('State', 'first, second')
 Action = cl.namedtuple('Action', 'prob, reward, state')
-# Transition = cl.namedtuple('Transition', 'state, action')
 Inventory = cl.namedtuple('Inventory', 'rented, returned')
 Facility = cl.namedtuple('Facility',
                          'capacity, profit, cost, movable, locations')
