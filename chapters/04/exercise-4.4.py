@@ -9,8 +9,6 @@ from argparse import ArgumentParser
 from configparser import ConfigParser
 
 import numpy as np
-import seaborn as sns
-import matplotlib.pyplot as plt
 from matplotlib.animation import ArtistAnimation
 
 logging.basicConfig(level=logging.INFO,
