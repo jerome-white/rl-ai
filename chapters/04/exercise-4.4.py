@@ -123,8 +123,8 @@ class StateEvolution:
 
     def write(self):
         names = map(lambda x: Path('rental-' + x), ('rewards', 'policies'))
-        for i in zip(names, self.data):
-            np.savez_compressed(*i)
+        for (i, j) in zip(names, self.data):
+            np.savez_compressed(i, *j)
 
 arguments = ArgumentParser()
 arguments.add_argument('--config', type=Path)
