@@ -22,6 +22,21 @@ Action = cl.namedtuple('Action', 'prob, reward, state')
 Transition = cl.namedtuple('Transition', 'state, action')
 Inventory = cl.namedtuple('Inventory', 'rented, returned')
 
+def poisson_(func):
+    computed = {}
+
+    def wrapper(lam, n):
+        key = (lam, n)
+        if key not in computed:
+            computed[key] = func(*key)
+        return computed[key]
+
+    return wrapper
+
+@poisson_
+def poisson(lam, n):
+    return math.pow(lam, n) / math.factorial(n) * math.exp(-lam)
+
 def irange(stop):
     yield from range(stop + 1)
 
@@ -41,17 +56,9 @@ def bellman(incoming, outgoing, facility, discount):
 class Location:
     def __init__(self, rentals, returns):
         self.params = (rentals, returns)
-        self.computed = {}
 
     def probability(self, inventory):
-        return op.mul(*it.starmap(self.poisson, zip(inventory, self.params)))
-
-    def poisson(self, n, lam):
-        key = (n, lam)
-        if key not in self.computed:
-            self.computed[key] = lam ** n / math.factorial(n) * math.exp(-lam)
-
-        return self.computed[key]
+        return op.mul(*it.starmap(poisson, zip(inventory, self.params)))
 
 class Explorer:
     def __init__(self, env):
@@ -69,6 +76,7 @@ class Explorer:
     def at(self, state, action):
         for i in self.positions(state.first, action):
             first = state.first + i.returned - i.rented - action
+
             prob = self.first.probability(i)
             reward = self.env.profit * i.returned
             reward += self.env.cost * abs(action)
