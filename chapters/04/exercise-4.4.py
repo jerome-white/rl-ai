@@ -48,18 +48,18 @@ class Actions:
 
     def at(self, state, moved):
         for i in self.positions(state.first, moved):
-            f = state.first + moved
-            p = self.first.prob(i)
-            r = self.profit * i.returned + self.cost * abs(moved)
+            first = state.first + moved
+            prob = self.first.prob(i)
+            reward = self.profit * i.returned + self.cost * abs(moved)
 
             for j in self.positions(state.second, -moved):
-                s = state.second - moved
+                second = state.second - moved
 
-                prob = p * self.second.prob(j)
-                reward = r + self.profit * j.returned
-                state_ = State(f, s)
+                p = prob * self.second.prob(j)
+                r = reward + self.profit * j.returned
+                s = State(first, second)
 
-                yield Action(prob, reward, state_)
+                yield Action(p, r, s)
 
 class States:
     def __init__(self, capacity, locations):
