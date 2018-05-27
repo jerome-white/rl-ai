@@ -28,7 +28,7 @@ class Location:
         return op.mul(*it.starmap(poisson, zip(self.params, inventory)))
 
 class Actions:
-    def __init__(self, capacity, locations, profit, cost, movable):
+    def __init__(self, capacity, profit, cost, movable, locations):
         self.capacity = capacity
         self.profit = profit
         self.cost = cost
@@ -112,10 +112,10 @@ for (i, j) in env.items():
 #
 states = States(capacity, locations)
 actions = Actions(capacity,
-                  locations,
                   env['cost']['rental'],
                   env['cost']['move'],
-                  movable)
+                  movable,
+                  locations)
 
 values = np.zeros((capacity + 1, ) * len(locations))
 policy = np.zeros_like(values, int)
