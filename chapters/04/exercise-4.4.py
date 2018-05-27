@@ -24,21 +24,6 @@ Inventory = cl.namedtuple('Inventory', 'rented, returned')
 Facility = cl.namedtuple('Facility',
                          'capacity, profit, cost, movable, locations')
 
-def poisson_(func):
-    computed = {}
-
-    def wrapper(lam, n):
-        key = (lam, n)
-        if key not in computed:
-            computed[key] = func(*key)
-        return computed[key]
-
-    return wrapper
-
-@poisson_
-def poisson(lam, n):
-    return math.pow(lam, n) / math.factorial(n) * math.exp(-lam)
-
 def irange(stop):
     yield from range(stop + 1)
 
@@ -58,9 +43,17 @@ def bellman(incoming, outgoing, facility, discount):
 class Location:
     def __init__(self, rentals, returns):
         self.params = (rentals, returns)
+        self.computed = {}
 
-    def prob(self, inventory):
-        return op.mul(*it.starmap(poisson, zip(self.params, inventory)))
+    def probability(self, inventory):
+        return op.mul(*it.starmap(self.poisson, zip(inventory, self.params)))
+
+    def poisson(self, n, lam):
+        key = (n, lam)
+        if key not in self.computed:
+            self.computed[key] = lam ** n / math.factorial(n) * math.exp(-lam)
+
+        return self.computed[key]
 
 class Actions:
     def __init__(self, facility):
@@ -81,14 +74,14 @@ class Actions:
     def at(self, state, action):
         for i in self.positions(state.first, action):
             first = state.first + i.returned - i.rented - action
-            prob = self.first.prob(i)
+            prob = self.first.probability(i)
             reward = self.facility.profit * i.returned
             reward += self.facility.cost * abs(action)
 
             for j in self.positions(state.second, -action):
                 second = state.second + j.returned - j.rented + action
 
-                p = prob * self.second.prob(j)
+                p = prob * self.second.probability(j)
                 r = reward + self.facility.profit * j.returned
                 s = State(first, second)
 
