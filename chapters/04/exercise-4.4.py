@@ -52,26 +52,31 @@ class Actions:
         yield from range(-self.movable, self.movable + 1)
 
     def positions(self, cars, moved):
-        product = it.product(range(self.capacity + 1),
-                             range(self.capacity + 1))
-        for i in it.starmap(Inventory, product):
-            total = i.returned - (i.rented + moved)
-            if cars + total == self.capacity:
-                yield i
+        cars -= moved
+        if cars >= 0:
+            rentable = irange(cars)
+            returnable = irange(self.capacity - cars)
 
-    def at(self, state, moved):
-        for i in self.positions(state.first, moved):
-            first = state.first + moved
+            yield from it.starmap(Inventory, it.product(rentable, returnable))
+
+    def at(self, state, action):
+        for i in self.positions(state.first, action):
+            first = state.first + i.returned - i.rented - action
             prob = self.first.prob(i)
-            reward = self.profit * i.returned + self.cost * abs(moved)
+            reward = self.profit * i.returned + self.cost * abs(action)
 
-            for j in self.positions(state.second, -moved):
-                second = state.second - moved
+            for j in self.positions(state.second, -action):
+                second = state.second + j.returned - j.rented + action
 
                 p = prob * self.second.prob(j)
                 r = reward + self.profit * j.returned
                 s = State(first, second)
 
+                logging.debug('{s1} a:{a} f:{f} s:{s} {s2}'.format(s1=state,
+                                                                   a=action,
+                                                                   f=first,
+                                                                   s=second,
+                                                                   s2=s))
                 yield Action(p, r, s)
 
 class States:
