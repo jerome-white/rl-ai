@@ -51,7 +51,7 @@ def bellman(incoming, outgoing, facility, discount):
         reward = 0
         for i in actions.at(*t):
             reward += i.prob * (i.reward + discount * v[i.state])
-        logging.debug('{0} {1} {2}'.format(s, a, reward))
+        logging.debug('{0} {1} {2}'.format(*t, reward))
 
         outgoing.put((t, reward))
 
