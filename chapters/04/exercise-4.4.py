@@ -19,6 +19,7 @@ logging.basicConfig(level=logging.INFO,
 
 State = cl.namedtuple('State', 'first, second')
 Action = cl.namedtuple('Action', 'prob, reward, state')
+Transition = cl.namedtuple('Transition', 'state, action')
 Inventory = cl.namedtuple('Inventory', 'rented, returned')
 Facility = cl.namedtuple('Facility',
                          'capacity, profit, cost, movable, locations')
@@ -33,14 +34,14 @@ def bellman(incoming, outgoing, facility, discount):
     actions = Actions(facility)
 
     while True:
-        (s, a, v) = incoming.get()
+        (t, v) = incoming.get()
 
         reward = 0
-        for i in actions.at(s, a):
+        for i in actions.at(*t):
             reward += i.prob * (i.reward + discount * v[i.state])
         logging.debug('{0} {1} {2}'.format(s, a, reward))
 
-        outgoing.put((s, reward))
+        outgoing.put((t, reward))
 
 class Location:
     def __init__(self, rentals, returns):
@@ -158,10 +159,11 @@ with mp.Pool(args.workers, bellman, initargs):
             values_ = np.zeros_like(values)
 
             for s in states:
-                outgoing.put((s, policy[s], values))
+                transition = Transition(s, policy[s])
+                outgoing.put((transition, values))
             for _ in states:
-                (s, r) = incoming.get()
-                values_[s] = r
+                (t, r) = incoming.get()
+                values_[t.state] = r
 
             delta = np.sum(np.abs(values_ - values))
             logging.info('delta {0}'.format(delta))
@@ -179,19 +181,24 @@ with mp.Pool(args.workers, bellman, initargs):
         logging.info('policy improvement')
 
         stable = True
-        for s in it.takewhile(lambda _: stable,  states):
+        for s in states:
+            b = policy[s]
+
             jobs = 0
             for a in actions:
-                if a != policy[s]:
-                    outgoing.put((s, a, values))
+                if a != b:
+                    transition = Transition(s, a)
+                    outgoing.put((transition, values))
                     jobs += 1
-
+            optimal = values[s]
             for _ in range(jobs):
                 (t, r) = incoming.get()
-                if r > values[s]:
-                    log.info('unstable')
-                    stable = False
-                    break
+                if r > optimal:
+                    policy[s] = t.action
+
+            if b != policy[s]:
+                log.info('unstable')
+                stable = False
 
 ani = ArtistAnimation(plt.gcf(), evolution, interval=50, blit=True)
 ani.save('exercise-4.4.mp4')
