@@ -152,11 +152,13 @@ with mp.Pool(args.workers, bellman, initargs):
     # Run!
     #
     stable = False
-    while not stable:
+    for i in it.takewhile(lambda _: stable, it.count()):
+        logging.critical('iteration {0}'.format(i))
+
         #
         # policy evaluation
         #
-        logging.info('policy evaluation')
+        logging.warning('policy evaluation')
 
         while True:
             reward_ = np.zeros_like(reward)
@@ -180,7 +182,7 @@ with mp.Pool(args.workers, bellman, initargs):
         #
         # policy improvement
         #
-        logging.info('policy improvement')
+        logging.warning('policy improvement')
 
         stable = True
         for s in env.states():
@@ -202,8 +204,7 @@ with mp.Pool(args.workers, bellman, initargs):
 
             if b != policy[s]:
                 stable = False
-
-        logging.info('stable: {0}'.format(stable))
+        logging.warning('stable: {0}'.format(stable))
 
         evolution.update(reward, policy)
     evolution.write()
