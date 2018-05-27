@@ -3,6 +3,7 @@ import logging
 import operator as op
 import itertools as it
 import collections as cl
+import multiprocessing as mp
 from pathlib import Path
 from argparse import ArgumentParser
 from configparser import ConfigParser
@@ -18,20 +19,29 @@ logging.basicConfig(level=logging.INFO,
 
 State = cl.namedtuple('State', 'first, second')
 Action = cl.namedtuple('Action', 'prob, reward, state')
+# Transition = cl.namedtuple('Transition', 'state, action')
 Inventory = cl.namedtuple('Inventory', 'rented, returned')
-
-def bellman(actions, estimate, discount):
-    value = 0
-    for a in actions:
-        value += a.prob * (a.reward + discount * estimate[a.state])
-
-    return value
+Facility = cl.namedtuple('Facility',
+                         'capacity, profit, cost, movable, locations')
 
 def poisson(lam, n):
     return lam ** n / math.factorial(n) * math.e ** -lam
 
 def irange(stop):
     yield from range(stop + 1)
+
+def bellman(incoming, outgoing, facility, discount):
+    actions = Actions(facility)
+
+    while True:
+        (s, a, v) = incoming.get()
+
+        reward = 0
+        for i in actions.at(s, a):
+            reward += i.prob * (i.reward + discount * v[i.state])
+        logging.debug('{0} {1} {2}'.format(s, a, reward))
+
+        outgoing.put((s, reward))
 
 class Location:
     def __init__(self, rentals, returns):
@@ -41,21 +51,18 @@ class Location:
         return op.mul(*it.starmap(poisson, zip(self.params, inventory)))
 
 class Actions:
-    def __init__(self, capacity, profit, cost, movable, locations):
-        self.capacity = capacity
-        self.profit = profit
-        self.cost = cost
-        self.movable = movable
-        (self.first, self.second) = locations
+    def __init__(self, facility):
+        self.facility = facility
+        (self.first, self.second) = facility.locations
 
     def __iter__(self):
-        yield from range(-self.movable, self.movable + 1)
+        yield from range(-self.facility.movable, self.facility.movable + 1)
 
     def positions(self, cars, moved):
         cars -= moved
         if cars >= 0:
             rentable = irange(cars)
-            returnable = irange(self.capacity - cars)
+            returnable = irange(self.facility.capacity - cars)
 
             yield from it.starmap(Inventory, it.product(rentable, returnable))
 
@@ -63,13 +70,14 @@ class Actions:
         for i in self.positions(state.first, action):
             first = state.first + i.returned - i.rented - action
             prob = self.first.prob(i)
-            reward = self.profit * i.returned + self.cost * abs(action)
+            reward = self.facility.profit * i.returned
+            reward += self.facility.cost * abs(action)
 
             for j in self.positions(state.second, -action):
                 second = state.second + j.returned - j.rented + action
 
                 p = prob * self.second.prob(j)
-                r = reward + self.profit * j.returned
+                r = reward + self.facility.profit * j.returned
                 s = State(first, second)
 
                 logging.debug('{s1} a:{a} f:{f} s:{s} {s2}'.format(s1=state,
@@ -80,18 +88,19 @@ class Actions:
                 yield Action(p, r, s)
 
 class States:
-    def __init__(self, capacity, locations):
-        self.capacity = capacity
-        self.locations = locations
+    def __init__(self, facility):
+        self.capacity = facility.capacity
+        self.repeat = len(facility.locations)
 
     def __iter__(self):
-        product = it.product(irange(self.capacity), repeat=len(self.locations))
+        product = it.product(irange(self.capacity), repeat=self.repeat)
         yield from it.starmap(State, product)
 
 arguments = ArgumentParser()
 arguments.add_argument('--config', type=Path)
 arguments.add_argument('--discount', type=float)
 arguments.add_argument('--improvement-threshold', type=float)
+arguments.add_argument('--workers', type=int, default=mp.cpu_count())
 args = arguments.parse_args()
 
 config = ConfigParser()
@@ -117,58 +126,73 @@ for (i, j) in env.items():
         loc = Location(j['requests'], j['returns'])
         locations.append(loc)
 
-#
-# Object initialization
-#
-states = States(capacity, locations)
-actions = Actions(capacity,
-                  env['cost']['rental'],
-                  env['cost']['move'],
-                  movable,
-                  locations)
+facility = Facility(env['system']['capacity'],
+                    env['cost']['rental'],
+                    env['cost']['move'],
+                    env['system']['movable'],
+                    locations)
+incoming = mp.Queue()
+outgoing = mp.Queue()
+initargs = (outgoing, incoming, facility, args.discount)
 
-values = np.zeros((capacity + 1, ) * len(locations))
-policy = np.zeros_like(values, int)
-evolution = []
-
-#
-# Run!
-#
-stable = False
-while not stable:
+with mp.Pool(args.workers, bellman, initargs):
     #
-    # policy evaluation
+    # Object initialization
     #
-    logging.info('policy evaluation')
+    states = States(facility)
 
-    while True:
-        values_ = np.zeros_like(values)
-        for s in states:
-            a = actions.at(s, policy[s])
-            values_[s] = bellman(a, values, args.discount)
-        delta = np.sum(np.abs(values_ - values))
-        logging.info('delta {0}'.format(delta))
-
-        if delta < args.improvement_threshold:
-            break
-        values = values_
-    logging.info(values)
-    evolution.append([ sns.heatmap(values, vmin=-movable, vmax=movable) ])
+    values = np.zeros((facility.capacity + 1, ) * len(locations))
+    policy = np.zeros_like(values, int)
+    evolution = []
 
     #
-    # policy improvement
+    # Run!
     #
-    logging.info('policy improvement')
+    stable = False
+    while not stable:
+        #
+        # policy evaluation
+        #
+        logging.info('policy evaluation')
 
-    stable = True
-    for s in states:
-        optimal = np.argmax([
-            bellman(actions.at(s, x), values, args.discount) for x in actions
-        ])
-        if policy[s] != optimal:
-            logging.info('not stable')
-            policy[s] = optimal
-            stable = False
+        while True:
+            values_ = np.zeros_like(values)
+
+            for s in states:
+                outgoing.put((s, policy[s], values))
+            for _ in states:
+                (s, r) = incoming.get()
+                values_[s] = r
+
+            delta = np.sum(np.abs(values_ - values))
+            logging.info('delta {0}'.format(delta))
+
+            if delta < args.improvement_threshold:
+                break
+            values = values_
+
+        ax = sns.heatmap(values, vmin=-facility.movable, vmax=facility.movable)
+        evolution.append([ ax ])
+
+        #
+        # policy improvement
+        #
+        logging.info('policy improvement')
+
+        stable = True
+        for s in it.takewhile(lambda _: stable,  states):
+            jobs = 0
+            for a in actions:
+                if a != policy[s]:
+                    outgoing.put((s, a, values))
+                    jobs += 1
+
+            for _ in range(jobs):
+                (t, r) = incoming.get()
+                if r > values[s]:
+                    log.info('unstable')
+                    stable = False
+                    break
 
 ani = ArtistAnimation(plt.gcf(), evolution, interval=50, blit=True)
 ani.save('exercise-4.4.mp4')
