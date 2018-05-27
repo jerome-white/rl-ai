@@ -21,14 +21,12 @@ State = cl.namedtuple('State', 'first, second')
 Action = cl.namedtuple('Action', 'prob, reward, state')
 Transition = cl.namedtuple('Transition', 'state, action')
 Inventory = cl.namedtuple('Inventory', 'rented, returned')
-Facility = cl.namedtuple('Facility',
-                         'capacity, profit, cost, movable, locations')
 
 def irange(stop):
     yield from range(stop + 1)
 
 def bellman(incoming, outgoing, facility, discount):
-    actions = Actions(facility)
+    actions = Explorer(facility)
 
     while True:
         (t, v) = incoming.get()
@@ -55,19 +53,16 @@ class Location:
 
         return self.computed[key]
 
-class Actions:
-    def __init__(self, facility):
-        self.facility = facility
-        (self.first, self.second) = facility.locations
-
-    def __iter__(self):
-        yield from range(-self.facility.movable, self.facility.movable + 1)
+class Explorer:
+    def __init__(self, env):
+        self.env = env
+        (self.first, self.second) = env.locations
 
     def positions(self, cars, moved):
         cars -= moved
         if cars >= 0:
             rentable = irange(cars)
-            returnable = irange(self.facility.capacity - cars)
+            returnable = irange(self.env.capacity - cars)
 
             yield from it.starmap(Inventory, it.product(rentable, returnable))
 
@@ -75,14 +70,14 @@ class Actions:
         for i in self.positions(state.first, action):
             first = state.first + i.returned - i.rented - action
             prob = self.first.probability(i)
-            reward = self.facility.profit * i.returned
-            reward += self.facility.cost * abs(action)
+            reward = self.env.profit * i.returned
+            reward += self.env.cost * abs(action)
 
             for j in self.positions(state.second, -action):
                 second = state.second + j.returned - j.rented + action
 
                 p = prob * self.second.probability(j)
-                r = reward + self.facility.profit * j.returned
+                r = reward + self.env.profit * j.returned
                 s = State(first, second)
 
                 logging.debug('{s1} a:{a} f:{f} s:{s} {s2}'.format(s1=state,
@@ -92,14 +87,26 @@ class Actions:
                                                                    s2=s))
                 yield Action(p, r, s)
 
-class States:
-    def __init__(self, facility):
-        self.capacity = facility.capacity
-        self.repeat = len(facility.locations)
+class Environment:
+    def __init__(self, config):
+        self.capacity = int(config['system']['capacity'])
+        self.movable = int(config['system']['movable'])
+        self.profit = float(config['cost']['rental'])
+        self.cost = float(config['cost']['move'])
 
-    def __iter__(self):
-        product = it.product(irange(self.capacity), repeat=self.repeat)
+        self.locations = []
+        for (i, j) in config.items():
+            if i.startswith('location:'):
+                l = Location(*[ int(j[x]) for x in ('requests', 'returns') ])
+                self.locations.append(l)
+
+    def states(self):
+        product = it.product(irange(self.capacity), repeat=len(self.locations))
+
         yield from it.starmap(State, product)
+
+    def actions(self):
+        yield from range(-self.movable, self.movable + 1)
 
 arguments = ArgumentParser()
 arguments.add_argument('--config', type=Path)
@@ -111,42 +118,14 @@ args = arguments.parse_args()
 config = ConfigParser()
 config.read(args.config)
 
-#
-# Convert configuration options to integers
-#
-env = cl.defaultdict(dict)
-for (i, j) in config.items():
-    for (k, v) in j.items():
-        env[i][k] = int(v)
+env = Environment(config)
 
-capacity = env['system']['capacity']
-movable = env['system']['movable']
-
-#
-# Establish setup objects
-#
-locations = []
-for (i, j) in env.items():
-    if i.startswith('location:'):
-        loc = Location(j['requests'], j['returns'])
-        locations.append(loc)
-
-facility = Facility(env['system']['capacity'],
-                    env['cost']['rental'],
-                    env['cost']['move'],
-                    env['system']['movable'],
-                    locations)
 incoming = mp.Queue()
 outgoing = mp.Queue()
-initargs = (outgoing, incoming, facility, args.discount)
+initargs = (outgoing, incoming, env, args.discount)
 
 with mp.Pool(args.workers, bellman, initargs):
-    #
-    # Object initialization
-    #
-    states = States(facility)
-
-    values = np.zeros((facility.capacity + 1, ) * len(locations))
+    values = np.zeros((env.capacity + 1, ) * len(env.locations))
     policy = np.zeros_like(values, int)
     evolution = []
 
@@ -163,10 +142,12 @@ with mp.Pool(args.workers, bellman, initargs):
         while True:
             values_ = np.zeros_like(values)
 
-            for s in states:
+            jobs = 0
+            for s in env.states():
                 transition = Transition(s, policy[s])
                 outgoing.put((transition, values))
-            for _ in states:
+                jobs += 1
+            for _ in range(jobs):
                 (t, r) = incoming.get()
                 values_[t.state] = r
 
@@ -177,7 +158,7 @@ with mp.Pool(args.workers, bellman, initargs):
                 break
             values = values_
 
-        ax = sns.heatmap(values, vmin=-facility.movable, vmax=facility.movable)
+        ax = sns.heatmap(values, vmin=-env.movable, vmax=env.movable)
         evolution.append([ ax ])
 
         #
@@ -186,11 +167,11 @@ with mp.Pool(args.workers, bellman, initargs):
         logging.info('policy improvement')
 
         stable = True
-        for s in states:
+        for s in env.states():
             b = policy[s]
 
             jobs = 0
-            for a in actions:
+            for a in env.actions():
                 if a != b:
                     transition = Transition(s, a)
                     outgoing.put((transition, values))
@@ -200,6 +181,7 @@ with mp.Pool(args.workers, bellman, initargs):
                 (t, r) = incoming.get()
                 if r > optimal:
                     optimal = r
+                    assert(s == t.state)
                     policy[s] = t.action
 
             if b != policy[s]:
