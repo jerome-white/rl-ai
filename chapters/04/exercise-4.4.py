@@ -116,6 +116,19 @@ class Environment:
     def actions(self):
         yield from range(-self.movable, self.movable + 1)
 
+class StateEvolution:
+    def __init__(self, rewards, policies):
+        self.data = [ [ x ] for x in (rewards, policies) ]
+
+    def update(self, rewards, policies):
+        for (i, j) in zip(self.data, (rewards, policies)):
+            i.append(j)
+
+    def write(self):
+        names = map(lambda x: Path('rental-' + x), ('rewards', 'policies'))
+        for i in zip(names, self.data):
+            np.savez_compressed(*i)
+
 arguments = ArgumentParser()
 arguments.add_argument('--config', type=Path)
 arguments.add_argument('--discount', type=float)
@@ -133,9 +146,9 @@ outgoing = mp.Queue()
 initargs = (outgoing, incoming, env, args.discount)
 
 with mp.Pool(args.workers, bellman, initargs):
-    values = np.zeros((env.capacity + 1, ) * len(env.locations))
-    policy = np.zeros_like(values, int)
-    evolution = []
+    reward = np.zeros((env.capacity + 1, ) * len(env.locations))
+    policy = np.zeros_like(reward, int)
+    evolution = StateEvolution(reward, policy)
 
     #
     # Run!
@@ -148,26 +161,23 @@ with mp.Pool(args.workers, bellman, initargs):
         logging.info('policy evaluation')
 
         while True:
-            values_ = np.zeros_like(values)
+            reward_ = np.zeros_like(reward)
 
             jobs = 0
             for s in env.states():
                 transition = Transition(s, policy[s])
-                outgoing.put((transition, values))
+                outgoing.put((transition, reward))
                 jobs += 1
             for _ in range(jobs):
                 (t, r) = incoming.get()
-                values_[t.state] = r
+                reward_[t.state] = r
 
-            delta = np.sum(np.abs(values_ - values))
+            delta = np.sum(np.abs(reward_ - reward))
             logging.info('delta {0}'.format(delta))
 
             if delta < args.improvement_threshold:
                 break
-            values = values_
-
-        ax = sns.heatmap(values, vmin=-env.movable, vmax=env.movable)
-        evolution.append([ ax ])
+            reward = reward_
 
         #
         # policy improvement
@@ -182,9 +192,9 @@ with mp.Pool(args.workers, bellman, initargs):
             for a in env.actions():
                 if a != b:
                     transition = Transition(s, a)
-                    outgoing.put((transition, values))
+                    outgoing.put((transition, reward))
                     jobs += 1
-            optimal = values[s]
+            optimal = reward[s]
             for _ in range(jobs):
                 (t, r) = incoming.get()
                 if r > optimal:
@@ -197,5 +207,5 @@ with mp.Pool(args.workers, bellman, initargs):
 
         logging.info('stable: {0}'.format(stable))
 
-ani = ArtistAnimation(plt.gcf(), evolution, interval=50, blit=True)
-ani.save('exercise-4.4.mp4')
+        evolution.update(reward, policy)
+    evolution.write()
