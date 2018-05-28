@@ -115,11 +115,12 @@ class Environment:
 
 class StateEvolution:
     def __init__(self, rewards, policies):
-        self.data = [ [ x ] for x in (rewards, policies) ]
+        self.data = []
+        self.update(rewards, policies)
 
     def update(self, rewards, policies):
         for (i, j) in zip(self.data, (rewards, policies)):
-            i.append(j)
+            i.append(np.copy(j))
 
     def write(self):
         names = map(lambda x: Path('rental-' + x), ('rewards', 'policies'))
