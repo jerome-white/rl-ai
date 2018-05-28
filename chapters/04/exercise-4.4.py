@@ -168,9 +168,9 @@ with mp.Pool(args.workers, bellman, initargs):
 
             delta = np.sum(np.abs(reward_ - reward))
             logging.info('delta {0}'.format(delta))
-
             if delta < args.improvement_threshold:
                 break
+
             reward = reward_
 
         #
