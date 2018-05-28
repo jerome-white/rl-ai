@@ -7,35 +7,25 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
-def heatmaps(data, minmax):
-    iterable = iter(data)
-    
-    def wrapper(_):
-        i = next(iterable)
-        (_, title) = i.split('_')
+def func(frame, limit):
+    (i, (_, data)) = frame
 
-        plt.clf()
-        ax = sns.heatmap(data[i], vmin=-minmax, vmax=minmax)
-        ax.set_title('Iteration: ' + title)
-        ax.invert_yaxis()
+    plt.clf()
+    ax = sns.heatmap(data, vmin=-limit, vmax=limit)
+    ax.set_title('Iteration: {}'.format(i))
+    ax.invert_yaxis()
 
-    return wrapper
+    return [ ax ]
         
 arguments = ArgumentParser()
 arguments.add_argument('--data', type=Path)
-arguments.add_argument('--config', type=Path)
+arguments.add_argument('--limit', type=int)
 args = arguments.parse_args()
 
-config = ConfigParser()
-config.read(args.config)
-
 data = np.load(args.data)
-artists = heatmaps(data, int(config['system']['movable']))
-frames = len(data.keys()) - 1
-
 ani = FuncAnimation(plt.gcf(),
-                    artists,
-                    frames=frames,
-                    interval=1000,
-                    repeat=True)
+                    func,
+                    frames=enumerate(data.items()),
+                    fargs=(args.limit, ),
+                    interval=1000)
 ani.save(args.data.with_suffix('.mp4'))
