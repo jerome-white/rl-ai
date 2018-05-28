@@ -115,7 +115,7 @@ class Environment:
 
 class StateEvolution:
     def __init__(self, rewards, policies):
-        self.data = []
+        self.data = ([], [])
         self.update(rewards, policies)
 
     def update(self, rewards, policies):
