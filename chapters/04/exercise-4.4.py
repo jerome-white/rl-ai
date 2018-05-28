@@ -151,9 +151,10 @@ with mp.Pool(args.workers, bellman, initargs):
     #
     # Run!
     #
+    step = 0
     stable = False
-    for i in it.takewhile(lambda _: not stable, it.count()):
-        logging.critical('iteration {0}'.format(i))
+    while not stable:
+        logging.critical('iteration {0}'.format(step))
 
         #
         # policy evaluation
@@ -204,7 +205,9 @@ with mp.Pool(args.workers, bellman, initargs):
 
             if b != policy[s]:
                 stable = False
+
         logging.warning('stable: {0}'.format(stable))
 
         evolution.update(reward, policy)
+        step += 1
     evolution.write()
