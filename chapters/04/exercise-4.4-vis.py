@@ -15,7 +15,7 @@ def heatmaps(data, minmax):
         (_, title) = i.split('_')
 
         plt.clf()
-        ax = sns.heatmap(data[i], vmin=-minmax, vmax=minmax, linewidths=0.01)
+        ax = sns.heatmap(data[i], vmin=-minmax, vmax=minmax)
         ax.set_title('Iteration: ' + title)
         ax.invert_yaxis()
 
@@ -33,5 +33,9 @@ data = np.load(args.data)
 artists = heatmaps(data, int(config['system']['movable']))
 frames = len(data.keys()) - 1
 
-ani = FuncAnimation(plt.gcf(), artists, frames=frames, repeat=True)
+ani = FuncAnimation(plt.gcf(),
+                    artists,
+                    frames=frames,
+                    interval=1000,
+                    repeat=True)
 ani.save(args.data.with_suffix('.mp4'))
