@@ -62,34 +62,27 @@ class Explorer:
         self.env = env
         (self.first, self.second) = env.locations
 
-    def positions(self, cars, moved):
-        cars -= moved
-        if cars >= 0:
-            rentable = irange(cars)
-            returnable = irange(self.env.capacity - cars)
+    def explain(self, cars):
+        rented = irange(self.env.capacity)
+        returned = irange(cars)
 
-            yield from it.starmap(Inventory, it.product(rentable, returnable))
+        yield from it.starmap(Inventory, it.product(rented, returned))
 
     def at(self, state, action):
-        for i in self.positions(state.first, action):
-            first = state.first + i.returned - i.rented - action
+        s = State(state.first - action, state.second + action)
+        if any([ x < 0 or x > self.env.capacity for x in s ]):
+            return
 
+        move = self.env.cost * abs(action)
+
+        for i in self.explain(s.first):
             prob = self.first.probability(i)
-            reward = self.env.profit * i.returned
-            reward += self.env.cost * abs(action)
+            reward = self.env.profit * i.returned + move
 
-            for j in self.positions(state.second, -action):
-                second = state.second + j.returned - j.rented + action
-
+            for j in self.explain(s.second):
                 p = prob * self.second.probability(j)
                 r = reward + self.env.profit * j.returned
-                s = State(first, second)
 
-                logging.debug('{s1} a:{a} f:{f} s:{s} {s2}'.format(s1=state,
-                                                                   a=action,
-                                                                   f=first,
-                                                                   s=second,
-                                                                   s2=s))
                 yield Action(p, r, s)
 
 class Environment:
