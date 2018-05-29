@@ -96,7 +96,7 @@ class Environment:
         self.locations = []
         for (i, j) in config.items():
             if i.startswith('location:'):
-                l = Location(*[ int(j[x]) for x in ('requests', 'returns') ])
+                l = Location(*[ int(j[x]) for x in ('rentals', 'returns') ])
                 self.locations.append(l)
 
     def states(self):
