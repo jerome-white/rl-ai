@@ -55,7 +55,7 @@ class Location:
         self.params = (rentals, returns)
 
     def probability(self, inventory):
-        return op.mul(*it.starmap(poisson, zip(self.params, inventory)))
+        return op.mul(*it.starmap(poisson, zip(inventory, self.params)))
 
 class Explorer:
     def __init__(self, env):
