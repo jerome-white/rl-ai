@@ -181,7 +181,7 @@ with mp.Pool(args.workers, bellman, initargs):
 
         stable = True
         for s in env.states():
-            b = policy[s]
+            (b, optimal) = [ x[s] for x in (policy, rewards) ]
 
             jobs = 0
             for a in env.actions():
@@ -189,7 +189,6 @@ with mp.Pool(args.workers, bellman, initargs):
                     transition = Transition(s, a)
                     outgoing.put((transition, reward))
                     jobs += 1
-            optimal = reward[s]
             for _ in range(jobs):
                 (t, r) = incoming.get()
                 if r > optimal:
