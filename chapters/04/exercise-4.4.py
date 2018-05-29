@@ -62,7 +62,7 @@ class Explorer:
         self.env = env
         (self.first, self.second) = env.locations
 
-    def explain(self, cars):
+    def outgoing(self, cars):
         rented = irange(self.env.capacity)
         returned = irange(cars)
 
@@ -71,11 +71,11 @@ class Explorer:
     def explore_(self, state, action):
         move = self.env.cost * abs(action)
 
-        for i in self.explain(state.first):
+        for i in self.outgoing(state.first):
             p = self.first.probability(i)
             r = self.env.profit * i.returned + move
 
-            for j in self.explain(state.second):
+            for j in self.outgoing(state.second):
                 probability = p * self.second.probability(j)
                 reward = r + self.env.profit * j.returned
 
