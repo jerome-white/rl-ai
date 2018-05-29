@@ -181,7 +181,7 @@ with mp.Pool(args.workers, bellman, initargs):
 
         stable = True
         for s in env.states():
-            (b, optimal) = [ x[s] for x in (policy, rewards) ]
+            (b, optimal) = [ x[s] for x in (policy, reward) ]
 
             jobs = 0
             for a in env.actions():
