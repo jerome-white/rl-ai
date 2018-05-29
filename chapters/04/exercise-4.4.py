@@ -45,7 +45,7 @@ def bellman(incoming, outgoing, env, discount):
         logging.debug(t)
 
         reward = 0
-        for i in actions.at(*t):
+        for i in actions.explore(*t):
             reward += i.prob * (i.reward + discount * v[i.state])
 
         outgoing.put((t, reward))
@@ -68,22 +68,23 @@ class Explorer:
 
         yield from it.starmap(Inventory, it.product(rented, returned))
 
-    def at(self, state, action):
-        s = State(state.first - action, state.second + action)
-        if any([ x < 0 or x > self.env.capacity for x in s ]):
-            return
-
+    def explore_(self, state, action):
         move = self.env.cost * abs(action)
 
-        for i in self.explain(s.first):
-            prob = self.first.probability(i)
-            reward = self.env.profit * i.returned + move
+        for i in self.explain(state.first):
+            p = self.first.probability(i)
+            r = self.env.profit * i.returned + move
 
-            for j in self.explain(s.second):
-                p = prob * self.second.probability(j)
-                r = reward + self.env.profit * j.returned
+            for j in self.explain(state.second):
+                probability = p * self.second.probability(j)
+                reward = r + self.env.profit * j.returned
 
-                yield Action(p, r, s)
+                yield Action(probability, reward, state)
+
+    def explore(self, state, action):
+        state_ = State(state.first - action, state.second + action)
+        if all([ 0 <= x <= self.env.capacity for x in state_ ]):
+            yield from self.explore_(state_, action)
 
 class Environment:
     def __init__(self, config):
