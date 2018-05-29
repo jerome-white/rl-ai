@@ -14,7 +14,7 @@ logging.basicConfig(level=logging.INFO,
                     format='[ %(asctime)s ] %(levelname)s: %(message)s',
                     datefmt='%H:%M:%S')
 
-State = cl.namedtuple('State', 'first, second')
+State_ = cl.namedtuple('State', 'first, second')
 Action = cl.namedtuple('Action', 'prob, reward, state')
 Inventory = cl.namedtuple('Inventory', 'rented, returned')
 Transition = cl.namedtuple('Transition', 'state, action')
@@ -50,6 +50,16 @@ def bellman(incoming, outgoing, env, discount):
 
         outgoing.put((t, reward))
 
+class State(State_):
+    def __new__(cls, first, second):
+        return super(State, cls).__new__(cls, first, second)
+
+    def isvalid(self, capacity):
+        return all([ 0 <= x <= capacity for x in self ])
+
+    def shift(self, cars):
+        return type(self)(self.first + cars, self.second - cars)
+
 class Location:
     def __init__(self, rentals, returns):
         self.params = (rentals, returns)
@@ -82,8 +92,8 @@ class Explorer:
                 yield Action(probability, reward, state)
 
     def explore(self, state, action):
-        state_ = State(state.first - action, state.second + action)
-        if all([ 0 <= x <= self.env.capacity for x in state_ ]):
+        state_ = state.shift(action)
+        if state_.islegal(self.env.capacity):
             yield from self.explore_(state_, action)
 
 class Environment:
