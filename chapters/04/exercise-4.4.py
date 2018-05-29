@@ -54,7 +54,7 @@ class State(State_):
     def __new__(cls, first, second):
         return super(State, cls).__new__(cls, first, second)
 
-    def isvalid(self, capacity):
+    def islegal(self, capacity):
         return all([ 0 <= x <= capacity for x in self ])
 
     def shift(self, cars):
