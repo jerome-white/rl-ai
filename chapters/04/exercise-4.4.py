@@ -63,10 +63,10 @@ class Explorer:
         (self.first, self.second) = env.locations
 
     def outgoing(self, cars):
-        rented = irange(self.env.capacity)
-        returned = irange(cars)
-
-        yield from it.starmap(Inventory, it.product(rented, returned))
+        available = self.env.capacity - cars
+        for i in irange(cars):
+            for j in irange(available + i):
+                yield Inventory(i, j)
 
     def explore_(self, state, action):
         move = self.env.cost * abs(action)
