@@ -26,7 +26,7 @@ class Animator:
                 self.vmin = x if self.vmin is None else min(self.vmin, x)
                 self.vmax = y if self.vmax is None else max(self.vmax, y)
 
-            self.data.append(data)
+            self.data.append(np.transpose(data))
 
     def __iter__(self):
         yield from enumerate(self.data)
