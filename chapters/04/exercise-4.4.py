@@ -10,7 +10,7 @@ from configparser import ConfigParser
 
 import numpy as np
 
-logging.basicConfig(level=logging.INFO,
+logging.basicConfig(level=logging.DEBUG,
                     format='[ %(asctime)s ] %(levelname)s: %(message)s',
                     datefmt='%H:%M:%S')
 
@@ -42,7 +42,6 @@ def bellman(incoming, outgoing, env, discount):
 
     while True:
         (t, v) = incoming.get()
-        logging.debug(t)
 
         reward = 0
         for i in actions.explore(*t):
@@ -165,12 +164,12 @@ with mp.Pool(args.workers, bellman, initargs):
     step = 0
     stable = False
     while not stable:
-        logging.critical('iteration {0}'.format(step))
+        logging.info('iteration {0}'.format(step))
 
         #
         # policy evaluation
         #
-        logging.warning('policy evaluation')
+        logging.info('policy evaluation')
 
         while True:
             reward_ = np.zeros_like(reward)
@@ -185,7 +184,7 @@ with mp.Pool(args.workers, bellman, initargs):
                 reward_[t.state] = r
 
             delta = np.sum(np.abs(reward_ - reward))
-            logging.info('delta {0}'.format(delta))
+            logging.debug('delta {0}'.format(delta))
             if delta < args.improvement_threshold:
                 break
 
@@ -194,7 +193,7 @@ with mp.Pool(args.workers, bellman, initargs):
         #
         # policy improvement
         #
-        logging.warning('policy improvement')
+        logging.info('policy improvement')
 
         stable = True
         for s in env.states():
@@ -216,7 +215,7 @@ with mp.Pool(args.workers, bellman, initargs):
             if b != policy[s]:
                 stable = False
 
-        logging.warning('stable: {0}'.format(stable))
+        logging.info('stable: {0}'.format(stable))
 
         evolution.update(reward, policy)
         step += 1
