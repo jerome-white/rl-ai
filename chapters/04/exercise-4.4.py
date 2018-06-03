@@ -17,7 +17,7 @@ logging.basicConfig(level=logging.INFO,
 State = cl.namedtuple('State', 'first, second')
 Action = cl.namedtuple('Action', 'prob, reward, state')
 Transition = cl.namedtuple('Transition', 'state, action')
-Observation = cl.namedtuple('Observation', 'probability, returned')
+Observation = cl.namedtuple('Observation', 'probability, rented')
 
 def poisson_(func):
     computed = {}
@@ -78,7 +78,7 @@ class Explorer:
             if prob < self.lower:
                 break
 
-            yield Observation(prob, returned)
+            yield Observation(prob, rented)
 
             returned += 1
             rented += 1
@@ -94,7 +94,7 @@ class Explorer:
             for (i, j) in it.product(frst, scnd):
                 prob = i.probability * j.probability
                 p += prob
-                r += prob * (self.env.profit * (i.returned + j.returned))
+                r += prob * self.env.profit * (i.rented + j.rented)
 
             yield Action(p, r, s)
 
