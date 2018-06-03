@@ -16,8 +16,8 @@ logging.basicConfig(level=logging.INFO,
 
 State_ = cl.namedtuple('State', 'first, second')
 Action = cl.namedtuple('Action', 'prob, reward, state')
-Inventory = cl.namedtuple('Inventory', 'rented, returned')
 Transition = cl.namedtuple('Transition', 'state, action')
+Observation = cl.namedtuple('Observation', 'probability, returned')
 
 def poisson_(func):
     computed = {}
@@ -64,32 +64,49 @@ class Location:
     def __init__(self, rentals, returns):
         self.params = (rentals, returns)
 
-    def probability(self, inventory):
-        return op.mul(*it.starmap(poisson, zip(inventory, self.params)))
+    def probability(self, rentals, returns):
+        params = zip((rentals, returns), self.params)
+
+        return op.mul(*it.starmap(poisson, params))
 
 class Explorer:
-    def __init__(self, env):
+    def __init__(self, env, lower=1e-5):
         self.env = env
+        self.lower = lower
         (self.first, self.second) = env.locations
 
-    def outgoing(self, cars):
-        available = self.env.capacity - cars
-        for i in irange(cars):
-            for j in irange(available + i):
-                yield Inventory(i, j)
+    def distribution(self, morning, night, location):
+        returned = night - morning
+        if returned < 0:
+            rented = abs(returned)
+            returned = 0
+        else:
+            rented = 0
+
+        while True:
+            prob = location.probability(rented, returned)
+            if prob < self.lower:
+                break
+
+            yield Observation(prob, returned)
+
+            returned += 1
+            rented += 1
 
     def explore_(self, state, action):
-        move = self.env.cost * abs(action)
+        for s in self.env.states():
+            p = 0
+            r = self.env.cost * abs(action)
 
-        for i in self.outgoing(state.first):
-            p = self.first.probability(i)
-            r = self.env.profit * i.returned + move
+            frst = self.distribution(state.first, s.first, self.first)
+            scnd = self.distribution(state.second, s.second, self.second)
 
-            for j in self.outgoing(state.second):
-                probability = p * self.second.probability(j)
-                reward = r + self.env.profit * j.returned
+            for (i, j) in it.product(frst, scnd):
+                prob = i.probability * j.probability
+                p += prob
+                r += prob * (self.env.profit * (i.returned + j.returned))
 
-                yield Action(probability, reward, state)
+            yield Action(p, r, s)
 
     def explore(self, state, action):
         state_ = state.shift(action)
