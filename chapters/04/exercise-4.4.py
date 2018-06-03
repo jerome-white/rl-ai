@@ -17,7 +17,7 @@ logging.basicConfig(level=logging.DEBUG,
 State = cl.namedtuple('State', 'first, second')
 Action = cl.namedtuple('Action', 'prob, reward, state')
 Transition = cl.namedtuple('Transition', 'state, action')
-Observation = cl.namedtuple('Observation', 'probability, rented')
+Observation = cl.namedtuple('Observation', 'probability, profit')
 
 def poisson_(func):
     computed = {}
@@ -59,9 +59,8 @@ class Location:
         return op.mul(*it.starmap(poisson, params))
 
 class Explorer:
-    def __init__(self, env, lower=1e-5):
+    def __init__(self, env):
         self.env = env
-        self.lower = lower
         (self.first, self.second) = env.locations
 
     def distribution(self, morning, night, location):
@@ -72,30 +71,27 @@ class Explorer:
         else:
             rented = 0
 
-        while True:
-            prob = location.probability(rented, returned)
-            if prob < self.lower:
-                break
+        for _ in irange(self.env.capacity):
+            assert(returned - rented == night - morning)
 
-            yield Observation(prob, rented)
+            prob = location.probability(rented, returned)
+            profit = self.env.profit * rented
+            yield Observation(prob, profit)
 
             returned += 1
             rented += 1
 
     def explore_(self, state, action):
-        for s in self.env.states():
-            p = 0
-            r = self.env.cost * abs(action)
+        move = self.env.cost * abs(action)
 
+        for s in self.env.states():
             frst = self.distribution(state.first, s.first, self.first)
             scnd = self.distribution(state.second, s.second, self.second)
 
             for (i, j) in it.product(frst, scnd):
-                prob = i.probability * j.probability
-                p += prob
-                r += prob * self.env.profit * (i.rented + j.rented)
-
-            yield Action(p, r, s)
+                p = i.probability * j.probability
+                r = i.profit + j.profit + move
+                yield Action(p, r, s)
 
     def explore(self, state, action):
         s = State(state.first + action, state.second - action)
