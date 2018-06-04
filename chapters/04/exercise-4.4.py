@@ -44,7 +44,7 @@ def bellman(incoming, outgoing, env, discount):
         (t, v) = incoming.get()
 
         reward = 0
-        for i in actions.explore(*t):
+        for i in actions.explore(t.state, t.action):
             reward += i.prob * (i.reward + discount * v[i.state])
 
         outgoing.put((t, reward))
