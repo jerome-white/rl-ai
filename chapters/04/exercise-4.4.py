@@ -38,7 +38,7 @@ def irange(stop):
 
 def bellman(incoming, outgoing, env, discount):
     cache = {}
-    actions = Explorer(env)
+    actions = StandardExplorer(env)
 
     while True:
         (t, v) = incoming.get()
@@ -100,7 +100,7 @@ class Explorer:
         (self.first, self.second) = env.locations
 
     def explore_(self, state, action):
-        r = self.env.cost * abs(action)
+        r = self.expenses(state, action)
         r += self.first.reward(state.first, self.env.profit)
         r += self.second.reward(state.second, self.env.profit)
 
@@ -115,12 +115,40 @@ class Explorer:
         if all([ 0 <= x <= self.env.capacity for x in s ]):
             yield from self.explore_(s, action)
 
+    def expenses(self, state, action):
+        return NotImplementedError()
+
+#
+# System as defined in the book.
+#
+class StandardExplorer(Explorer):
+    def expenses(self, state, action):
+        return self.env.cost * abs(action)
+
+#
+# System as proposed in the exercise.
+#
+class ConstrainedExplorer(Explorer):
+    def expenses(self, state, action):
+        billable = max(0, abs(action) - self.env.transfer)
+        cost = self.env.cost * billable
+
+        for i in state:
+            if i > self.env.overnight:
+                cost += self.env.storage
+
+        return cost
+
 class Environment:
     def __init__(self, config):
         self.capacity = int(config['system']['capacity'])
         self.movable = int(config['system']['movable'])
         self.profit = float(config['cost']['rental'])
         self.cost = float(config['cost']['move'])
+
+        self.transfer = int(config['system']['transfer'])
+        self.overnight = int(config['system']['overnight'])
+        self.storage = int(config['cost']['storage'])
 
         self.locations = []
         for (i, j) in config.items():
