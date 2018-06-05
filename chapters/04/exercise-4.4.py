@@ -203,9 +203,7 @@ with mp.Pool(args.workers, bellman, initargs):
     #
     # Run!
     #
-    step = 0
-    stable = False
-    while not stable:
+    for step in it.count():
         logging.info('iteration {0}'.format(step))
 
         #
@@ -256,9 +254,8 @@ with mp.Pool(args.workers, bellman, initargs):
 
             if b != policy[s]:
                 stable = False
-
-        logging.info('stable: {0}'.format(stable))
+        if stable:
+           break
 
         evolution.update(reward, policy)
-        step += 1
     evolution.write()
