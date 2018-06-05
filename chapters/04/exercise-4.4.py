@@ -1,6 +1,6 @@
 import math
 import logging
-import operator as op
+# import operator as op
 import itertools as it
 import collections as cl
 import multiprocessing as mp
@@ -39,6 +39,7 @@ def irange(stop):
 
 def bellman(incoming, outgoing, env, discount):
     actions = Explorer(env)
+    cache = {}
 
     while True:
         (t, v) = incoming.get()
@@ -50,48 +51,62 @@ def bellman(incoming, outgoing, env, discount):
         outgoing.put((t, reward))
 
 class Location:
-    def __init__(self, rentals, returns):
-        self.params = (rentals, returns)
+    def __init__(self, requests, returns, capacity):
+        self.requests = requests
+        self.returns = returns
+        self.capacity = capacity
 
-    def probability(self, rentals, returns):
-        params = zip((rentals, returns), self.params)
+        self.rewards = {}
+        self.transitions = {}
 
-        return op.mul(*it.starmap(poisson, params))
+    def service(self, cars):
+        for requested in irange(self.capacity):
+            yield (requested, min(cars, requested))
+
+    def reward(self, cars, profit=1):
+        if cars not in self.rewards:
+            rwd = 0
+            for (requested, rented) in self.service(cars):
+                rwd += rented * poisson(requested, self.requests)
+            rwd *= profit
+            self.rewards[cars] = rwd
+
+        return self.rewards[cars]
+
+    def transition(self, start, end):
+        situation = (start, end)
+
+        if situation not in self.transitions:
+            probability = 0
+
+            for (requested, rented) in self.service(start):
+                for returned in irange(self.capacity):
+                    available = start + returned - rented
+                    available = max(0, min(self.capacity, available))
+                    if available == end:
+                        rq = poisson(requested, self.requests)
+                        rt = poisson(returned, self.returns)
+                        probability += rq * rt
+
+            self.transitions[situation] = probability
+
+        return self.transitions[situation]
 
 class Explorer:
     def __init__(self, env):
         self.env = env
         (self.first, self.second) = env.locations
 
-    def distribution(self, morning, night, location):
-        returned = night - morning
-        if returned < 0:
-            rented = abs(returned)
-            returned = 0
-        else:
-            rented = 0
-
-        for _ in irange(self.env.capacity):
-            assert(returned - rented == night - morning)
-
-            prob = location.probability(rented, returned)
-            profit = self.env.profit * rented
-            yield Observation(prob, profit)
-
-            returned += 1
-            rented += 1
-
     def explore_(self, state, action):
-        move = self.env.cost * abs(action)
+        r = self.env.cost * abs(action)
+        r += self.first.reward(state.first, self.env.profit)
+        r += self.second.reward(state.second, self.env.profit)
 
         for s in self.env.states():
-            frst = self.distribution(state.first, s.first, self.first)
-            scnd = self.distribution(state.second, s.second, self.second)
+            p = self.first.transition(state.first, s.first)
+            p *= self.second.transition(state.second, s.second)
 
-            for (i, j) in it.product(frst, scnd):
-                p = i.probability * j.probability
-                r = i.profit + j.profit + move
-                yield Action(p, r, s)
+            yield Action(p, r, s)
 
     def explore(self, state, action):
         s = State(state.first + action, state.second - action)
@@ -108,8 +123,9 @@ class Environment:
         self.locations = []
         for (i, j) in config.items():
             if i.startswith('location:'):
-                l = Location(*[ int(j[x]) for x in ('rentals', 'returns') ])
-                self.locations.append(l)
+                expected = [ int(j[x]) for x in ('requests', 'returns') ]
+                location = Location(*expected, self.capacity)
+                self.locations.append(location)
 
     def states(self):
         product = it.product(irange(self.capacity), repeat=len(self.locations))
