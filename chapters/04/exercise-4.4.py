@@ -1,6 +1,5 @@
 import math
 import logging
-# import operator as op
 import itertools as it
 import collections as cl
 import multiprocessing as mp
@@ -38,14 +37,17 @@ def irange(stop):
     yield from range(stop + 1)
 
 def bellman(incoming, outgoing, env, discount):
-    actions = Explorer(env)
     cache = {}
+    actions = Explorer(env)
 
     while True:
         (t, v) = incoming.get()
 
+        if t not in cache:
+            cache[t] = list(actions.explore(t.state, t.action))
+
         reward = 0
-        for i in actions.explore(t.state, t.action):
+        for i in cache[t]:
             reward += i.prob * (i.reward + discount * v[i.state])
 
         outgoing.put((t, reward))
