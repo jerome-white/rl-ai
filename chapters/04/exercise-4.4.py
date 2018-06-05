@@ -82,11 +82,11 @@ class Location:
             probability = 0
 
             for (requested, rented) in self.service(start):
+                rq = poisson(requested, self.requests)
                 for returned in irange(self.capacity):
                     available = start + returned - rented
                     available = max(0, min(self.capacity, available))
                     if available == end:
-                        rq = poisson(requested, self.requests)
                         rt = poisson(returned, self.returns)
                         probability += rq * rt
 
