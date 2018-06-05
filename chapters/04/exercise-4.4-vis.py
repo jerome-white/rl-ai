@@ -26,7 +26,7 @@ class Animator:
                 self.vmin = x if self.vmin is None else min(self.vmin, x)
                 self.vmax = y if self.vmax is None else max(self.vmax, y)
 
-            self.data.append(np.transpose(data))
+            self.data.append(data)
 
     def __iter__(self):
         yield from enumerate(self.data)
@@ -35,7 +35,7 @@ class Animator:
         (i, data) = frame
 
         plt.clf()
-        ax = sns.heatmap(data, vmin=self.vmin, vmax=self.vmax)
+        ax = sns.heatmap(data, vmin=self.vmin, vmax=self.vmax, cmap='BrBG')
         ax.set_title('Iteration: {}'.format(i))
         ax.invert_yaxis()
 
