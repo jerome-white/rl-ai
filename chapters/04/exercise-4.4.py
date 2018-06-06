@@ -1,6 +1,7 @@
 import math
 import logging
 import itertools as it
+import functools as ft
 import collections as cl
 import multiprocessing as mp
 from pathlib import Path
@@ -8,6 +9,7 @@ from argparse import ArgumentParser
 from configparser import ConfigParser
 
 import numpy as np
+import scipy.stats as st
 
 logging.basicConfig(level=logging.DEBUG,
                     format='[ %(asctime)s ] %(levelname)s: %(message)s',
@@ -18,20 +20,9 @@ Action = cl.namedtuple('Action', 'prob, reward, state')
 Transition = cl.namedtuple('Transition', 'state, action')
 Observation = cl.namedtuple('Observation', 'probability, profit')
 
-def poisson_(func):
-    computed = {}
-
-    def wrapper(n, lam):
-        key = (n, lam)
-        if key not in computed:
-            computed[key] = func(*key)
-        return computed[key]
-
-    return wrapper
-
-@poisson_
+@ft.lru_cache(maxsize=2**13)
 def poisson(n, lam):
-    return math.pow(lam, n) / math.factorial(n) * math.exp(-lam)
+    return st.poisson.pmf(n, lam)
 
 def irange(stop):
     yield from range(stop + 1)
