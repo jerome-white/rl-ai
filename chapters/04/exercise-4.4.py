@@ -49,41 +49,33 @@ class Location:
         self.returns = returns
         self.capacity = capacity
 
-        self.rewards = {}
-        self.transitions = {}
+        self.reward = ft.lru_cache(maxsize=2**5)(self.reward)
+        self.transition = ft.lru_cache(maxsize=2**9)(self.transition)
 
     def service(self, cars):
         for requested in irange(self.capacity):
             yield (requested, min(cars, requested))
 
     def reward(self, cars, profit=1):
-        if cars not in self.rewards:
-            rwd = 0
-            for (requested, rented) in self.service(cars):
-                rwd += rented * poisson(requested, self.requests)
-            rwd *= profit
-            self.rewards[cars] = rwd
+        rwd = 0
+        for (requested, rented) in self.service(cars):
+            rwd += rented * poisson(requested, self.requests)
 
-        return self.rewards[cars]
+        return rwd * profit
 
     def transition(self, start, end):
-        situation = (start, end)
+        probability = 0
 
-        if situation not in self.transitions:
-            probability = 0
+        for (requested, rented) in self.service(start):
+            rq = poisson(requested, self.requests)
+            for returned in irange(self.capacity):
+                available = start + returned - rented
+                available = max(0, min(self.capacity, available))
+                if available == end:
+                    rt = poisson(returned, self.returns)
+                    probability += rq * rt
 
-            for (requested, rented) in self.service(start):
-                rq = poisson(requested, self.requests)
-                for returned in irange(self.capacity):
-                    available = start + returned - rented
-                    available = max(0, min(self.capacity, available))
-                    if available == end:
-                        rt = poisson(returned, self.returns)
-                        probability += rq * rt
-
-            self.transitions[situation] = probability
-
-        return self.transitions[situation]
+        return probability
 
 class Explorer:
     def __init__(self, env):
