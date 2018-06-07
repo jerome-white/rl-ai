@@ -1,4 +1,3 @@
-import math
 import logging
 import itertools as it
 import functools as ft
@@ -18,7 +17,6 @@ logging.basicConfig(level=logging.DEBUG,
 State = cl.namedtuple('State', 'first, second')
 Action = cl.namedtuple('Action', 'prob, reward, state')
 Transition = cl.namedtuple('Transition', 'state, action')
-Observation = cl.namedtuple('Observation', 'probability, profit')
 
 @ft.lru_cache(maxsize=2**13)
 def poisson(n, lam):
@@ -49,21 +47,22 @@ class Location:
         self.returns = returns
         self.capacity = capacity
 
-        self.reward = ft.lru_cache(maxsize=2**5)(self.reward)
-        self.transition = ft.lru_cache(maxsize=2**9)(self.transition)
+        self.reward = ft.lru_cache(maxsize=2**5)(self._reward)
+        self.transition = ft.lru_cache(maxsize=2**9)(self._transition)
 
     def service(self, cars):
         for requested in irange(self.capacity):
             yield (requested, min(cars, requested))
 
-    def reward(self, cars, profit=1):
+    def _reward(self, cars, profit=1):
         rwd = 0
+
         for (requested, rented) in self.service(cars):
             rwd += rented * poisson(requested, self.requests)
 
         return rwd * profit
 
-    def transition(self, start, end):
+    def _transition(self, start, end):
         probability = 0
 
         for (requested, rented) in self.service(start):
@@ -82,7 +81,7 @@ class Explorer:
         self.env = env
         (self.first, self.second) = env.locations
 
-    def explore_(self, state, action):
+    def _explore(self, state, action):
         r = self.expenses(state, action)
         r += self.first.reward(state.first, self.env.profit)
         r += self.second.reward(state.second, self.env.profit)
@@ -96,7 +95,7 @@ class Explorer:
     def explore(self, state, action):
         s = State(state.first + action, state.second - action)
         if all([ 0 <= x <= self.env.capacity for x in s ]):
-            yield from self.explore_(s, action)
+            yield from self._explore(s, action)
 
     def expenses(self, state, action):
         return NotImplementedError()
@@ -142,7 +141,6 @@ class Environment:
 
     def states(self):
         product = it.product(irange(self.capacity), repeat=len(self.locations))
-
         yield from it.starmap(State, product)
 
     def actions(self):
