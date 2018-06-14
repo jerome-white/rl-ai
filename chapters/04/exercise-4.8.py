@@ -27,7 +27,7 @@ def bellman(args):
 
     optimal = None
     for action in range(min(state, capital - state) + 1):
-        value = V[state + action]
+        value = values[state + action]
         reward = heads * value + (1 - heads) * value
 
         current = Transition(action, state, reward)
