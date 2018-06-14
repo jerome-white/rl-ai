@@ -1,35 +1,47 @@
-# import logging
+import logging
 import operator as op
-# import itertools as it
-# import collections as cl
 # import multiprocessing as mp
 # from pathlib import Path
 from argparse import ArgumentParser
 
-import numpy as np
+class Optimal:
+    def __init__(self, action=None, reward=None):
+        self.action = action
+        self.reward = reward
 
-Action = cl.namedtuple('Action', 'prob, reward, state')
+    def __bool__(self):
+        return self.action is not None and self.reward is not None
 
-def explore(state, action, value):
-    for i in (op.pos, op.neg):
-        a = i(action)
-        p = 0.4 if a > 0 else 1 - 0.4
-        state + a
+    def __gt__(self, other):
+        return self.reward > other.reward
 
 arguments = ArgumentParser()
+arguments.add_argument('--heads', type=float, default=0.4)
 arguments.add_argument('--improvement-threshold', type=float)
+arguments.add_argument('--maximum-capital', type=int, default=100)
 # arguments.add_argument('--workers', type=int, default=mp.cpu_count())
 args = arguments.parse_args()
 
-V = [ 0 ] * 100 + [ 1 ]
-delta = None
+V = [ 0 ] * args.maximum_capital + [ 1 ]
 
+delta = None
 while delta is None or delta > args.improvement_threshold:
-    for s in range(101):
+    for s in range(len(V)):
         rewards = []
-        for a in range(min(s, 100 - s) + 1):
-            traj = s + a
-            rewards.append(args.heads * V[traj] + (1 - args.heads) * V[traj])
+        for a in range(min(s, args.maximum_capital - s) + 1):
+            value = V[s + a]
+            rewards.append(args.heads * value + (1 - args.heads) * value)
         v = max(rewards)
-        delta = max(delta, abs(v - V[s])
+        delta = max(delta, abs(v - V[s]))
         V[s] = v
+
+policy = [ None ]
+for s in range(1, len(V) - 1):
+    optimal = Optimal()
+    for a in range(min(s, args.maximum_capital - s) + 1):
+        value = V[s + a]
+        reward = args.heads * value + (1 - args.heads) * value
+        current = Optimal(a, reward)
+        if not optimal or current > optimal:
+            optimal = current
+    policy.append(optimal.action)
