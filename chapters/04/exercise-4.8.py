@@ -1,8 +1,11 @@
 # import logging
 import itertools as it
 import multiprocessing as mp
-# from pathlib import Path
 from argparse import ArgumentParser
+
+import numpy as np
+
+from util import StateEvolution
 
 class Transition:
     def __init__(self, action, state, reward):
@@ -43,19 +46,31 @@ arguments.add_argument('--maximum-capital', type=int, default=100)
 arguments.add_argument('--workers', type=int, default=mp.cpu_count())
 args = arguments.parse_args()
 
-with Pool(args.workers):
-    states = States(args.heads, args.capital)
+with mp.Pool(args.workers) as pool:
+    states = States(args.heads, args.maximum_capital)
 
     V = np.zeros(args.maximum_capital + 1)
     V[-1] = 1
+    sweeps = StateEvolution(V)
 
-    delta = None
-    while delta is None or delta > args.improvement_threshold:
+    while True:
+        delta = 0
         for i in pool.imap_unordered(bellman, states.at(np.copy(V))):
             delta = max(delta, abs(i.reward - V[i.state]))
             V[i.state] = i.reward
+        sweeps.update(V)        
+        if delta < args.improvement_threshold:
+            break
 
-    policy = np.zeros_like(V)
+
+    sweeps.write('coin-values')
+
+    policy = np.zeros_like(V)                 
+    sweeps = StateEvolution(policy)
+            
     iterable = it.islice(states.at(V), 1, len(V) - 1)
     for i in pool.imap_unordered(bellman, iterable):
         policy[i.state] = i.action
+        sweeps.update(policy)
+
+    sweeps.write('coin-policy')
