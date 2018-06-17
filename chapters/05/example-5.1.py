@@ -47,7 +47,7 @@ class Policy:
         return self.value
 
     def __bool__(self):
-        return int(self) <= 21 and not self.stick(int(self))
+        return int(self) <= 21 and not self.stick()
 
     def __str__(self):
         return '[{0}]'.format(','.join([ str(x.value) for x in self.cards ]))
@@ -70,16 +70,16 @@ class Policy:
     def isnatural(self):
         return len(self.cards) == 2 and int(self) == 21
 
-    def stick(self, value):
+    def stick(self):
         raise NotImplementedError()
 
 class Dealer(Policy):
-    def stick(self, value):
-        return value >= 17
+    def stick(self):
+        return int(self) >= 17
 
 class Player(Policy):
-    def stick(self, value):
-        return 20 <= value <= 21
+    def stick(self):
+        return 20 <= int(self) <= 21
 
 def play():
     episode = []
