@@ -11,7 +11,6 @@ from matplotlib.animation import FuncAnimation
 class Animator:
     def __init__(self, npz, limit=None):
         self.data = []
-        self.ax = None
 
         if limit is None:
             self.vmin = None
