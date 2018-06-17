@@ -79,7 +79,7 @@ class Dealer(Policy):
 
 class Player(Policy):
     def stick(self, value):
-        return value == 20 or value == 21
+        return 20 <= value <= 21
 
 def play():
     episode = []
