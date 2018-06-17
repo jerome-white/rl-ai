@@ -30,8 +30,8 @@ def bellman(args):
 
     optimal = None
     for action in range(min(state, capital - state) + 1):
-        value = values[state + action]
-        reward = heads * value + (1 - heads) * value
+        reward = heads * values[state + action]
+        reward += (1 - heads) * values[state - action]
 
         current = Transition(action, state, reward)
         if optimal is None or current > optimal:
