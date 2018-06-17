@@ -96,7 +96,7 @@ def play():
     episode = [ State(int(player), face, player.ace) ]
 
     if player.isnatural():
-        return (episode, not dealer.isnatural())
+        return (episode, int(not dealer.isnatural()))
 
     for (i, p) in enumerate((player, dealer)):
         while p:
