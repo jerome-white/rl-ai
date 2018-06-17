@@ -99,18 +99,19 @@ def play():
         return (episode, 1)
 
     for (i, p) in enumerate((player, dealer)):
-        bust = False
-        try:
-            p.deal(next(deck))
-        except OverflowError:
-            bust = True
+        while p:
+            bust = False
+            try:
+                p.deal(next(deck))
+            except OverflowError:
+                bust = True
 
-        if not i:
-            episode.append(State(int(p), face, p.ace))
+            if not i:
+                episode.append(State(int(p), face, p.ace))
 
-        if bust:
-            reward = 1 if i else -1
-            return (episode, reward)
+            if bust:
+                reward = 1 if i else -1
+                return (episode, reward)
 
     (p, d) = [ int(x) for x in (player, dealer) ]
     reward = ((p > d) - (p < d)) # https://stackoverflow.com/a/11215908
