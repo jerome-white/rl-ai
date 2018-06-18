@@ -22,7 +22,7 @@ class States:
         self.capital = capital
 
     def at(self, values):
-        for s in range(len(values)):
+        for s in range(1, len(values) - 1):
             yield (s, values, self.heads, self.capital)
 
 def bellman(args):
@@ -66,8 +66,7 @@ with mp.Pool(args.workers) as pool:
 
     policy = np.zeros_like(V)
 
-    iterable = it.islice(states.at(V), 1, len(V) - 1)
-    for i in pool.imap_unordered(bellman, iterable):
+    for i in pool.imap_unordered(bellman, states.at(V)):
         policy[i.state] = i.action
 
     plt.bar(range(len(policy)), policy)
