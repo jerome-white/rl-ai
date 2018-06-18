@@ -35,10 +35,11 @@ def bellman(args):
 
         current = Transition(action, state, reward)
         if optimal:
-            if optimal[-1] > current:
-                continue
-            elif current > optimal[-1]:
+            best = optimal[0]
+            if current > best:
                 optimal.clear()
+            elif best > current:
+                continue
         optimal.append(current)
 
     if len(optimal) > 1:
@@ -61,8 +62,8 @@ with mp.Pool(args.workers) as pool:
 
     V = np.zeros(args.maximum_capital + 1)
     V[-1] = 1
-    sweeps = StateEvolution(V)
 
+    sweeps = StateEvolution(V)
     while True:
         delta = 0
         for i in pool.imap_unordered(bellman, states.at(np.copy(V))):
@@ -71,7 +72,6 @@ with mp.Pool(args.workers) as pool:
         sweeps.update(V)
         if delta < args.improvement_threshold:
             break
-
     sweeps.write('coin-values')
 
     policy = np.zeros_like(V)
