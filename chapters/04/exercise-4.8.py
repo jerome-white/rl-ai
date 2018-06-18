@@ -1,9 +1,9 @@
-# import logging
 import itertools as it
 import multiprocessing as mp
 from argparse import ArgumentParser
 
 import numpy as np
+import matplotlib.pyplot as plt
 
 from util import StateEvolution
 
@@ -58,19 +58,18 @@ with mp.Pool(args.workers) as pool:
         for i in pool.imap_unordered(bellman, states.at(np.copy(V))):
             delta = max(delta, abs(i.reward - V[i.state]))
             V[i.state] = i.reward
-        sweeps.update(V)        
+        sweeps.update(V)
         if delta < args.improvement_threshold:
             break
 
-
     sweeps.write('coin-values')
 
-    policy = np.zeros_like(V)                 
-    sweeps = StateEvolution(policy)
-            
+    policy = np.zeros_like(V)
+
     iterable = it.islice(states.at(V), 1, len(V) - 1)
     for i in pool.imap_unordered(bellman, iterable):
         policy[i.state] = i.action
-        sweeps.update(policy)
 
-    sweeps.write('coin-policy')
+    plt.bar(range(len(policy)), policy)
+    plt.grid(axis='y')
+    plt.savefig('coin-policy.png')
