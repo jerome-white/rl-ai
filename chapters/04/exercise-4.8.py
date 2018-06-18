@@ -28,16 +28,26 @@ class States:
 def bellman(args):
     (state, values, heads, capital) = args
 
-    optimal = None
+    optimal = []
     for action in range(min(state, capital - state) + 1):
         reward = heads * values[state + action]
         reward += (1 - heads) * values[state - action]
 
         current = Transition(action, state, reward)
-        if optimal is None or current > optimal:
-            optimal = current
+        if optimal:
+            if optimal[-1] > current:
+                continue
+            elif current > optimal[-1]:
+                optimal.clear()
+        optimal.append(current)
 
-    return optimal
+    if len(optimal) > 1:
+        nonzero = filter(lambda x: x.action > 0, optimal)
+        best = min(nonzero, key=lambda x: x.action)
+    else:
+        best = optimal[0]
+
+    return best
 
 arguments = ArgumentParser()
 arguments.add_argument('--heads', type=float, default=0.4)
