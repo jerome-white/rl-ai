@@ -26,12 +26,8 @@ class Average:
 class Deck(list):
     def __init__(self):
         for i in range(4):
-            # ace
-            self.append(Card(i, None))
-
-            # number cards
-            for j in range(2, 14):
-                value = min(j, 10) # jack, queen, king are 10
+            for j in range(13):
+                value = min(j + 1, 10) if j else None
                 self.append(Card(i, value))
 
     def __next__(self):
