@@ -103,7 +103,7 @@ class Blackjack:
         if self.player.isnatural():
             reward = int(not self.dealer.isnatural())
         else:
-            (p, d) = [ int(x) for x in (self.player, self.dealer) ]
+            (p, d) = map(int, (self.player, self.dealer))
             reward = (p > d) - (p < d) # https://stackoverflow.com/a/11215908
 
         return (episode, reward)
