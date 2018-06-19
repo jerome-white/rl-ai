@@ -1,4 +1,5 @@
 import logging
+import itertools as it
 import collections as cl
 import multiprocessing as mp
 from argparse import ArgumentParser
@@ -28,7 +29,7 @@ def func(args):
     # calculate returns
     #
     returns = cl.defaultdict(list)
-    for (state, _) in episode:
+    for (state, _) in it.islice(episode, 1, None):
         if ace ^ state.ace:
             returns[state].append(reward)
 
