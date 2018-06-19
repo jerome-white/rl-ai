@@ -7,8 +7,8 @@ State = cl.namedtuple('State', 'player, dealer, ace')
 class Deck(list):
     def __init__(self):
         for i in range(4):
-            for j in range(13):
-                value = min(j + 1, 10) if j else None
+            for j in range(1, 13):
+                value = min(j, 10)
                 self.append(Card(i, value))
 
     def __next__(self):
@@ -29,9 +29,9 @@ class Policy:
     def deal(self, card):
         self.cards += 1
 
-        try:
+        if card.value > 1:
             self.value += card.value
-        except TypeError:
+        else:
             if self.value + 11 <= 21:
                 self.value += 11
                 self.ace = True
