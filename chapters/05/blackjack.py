@@ -56,11 +56,11 @@ class Player(Policy):
         return 20 <= int(self) <= 21
 
 class Blackjack:
-    def __init__(self, state=None):
+    def __init__(self, state=None, player=Player):
         self.deck = Deck()
 
         if state is None:
-            self.player = Player()
+            self.player = player()
             self.dealer = Dealer()
 
             for (i, p) in enumerate((self.player, self.dealer)):
@@ -70,7 +70,7 @@ class Blackjack:
                     if i and not j:
                         self.face = card.value
         else:
-            self.player = Player(state.player, 2, state.ace)
+            self.player = player(state.player, 2, state.ace)
             self.dealer = Dealer(state.dealer, 1)
             self.face = state.dealer
 
