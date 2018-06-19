@@ -29,7 +29,7 @@ def func(args):
     # calculate returns
     #
     returns = cl.defaultdict(list)
-    for (state, _) in it.islice(episode, 1, None):
+    for (state, _) in episode:
         if not(ace ^ state.ace):
             returns[state].append(reward)
 
