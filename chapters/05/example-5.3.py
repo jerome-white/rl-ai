@@ -23,14 +23,14 @@ args = arguments.parse_args()
 Q = cl.defaultdict(lambda: [ -np.inf ] * len(('hit', 'stick')))
 policy = {}
 
-for state in it.takewhile(lambda _: args.games > 0, states()):
+for (i, state) in zip(range(args.games), states()):
     #
     # generate epsiode
     #
     blackjack = Blackjack(state)
     (episode, reward) = blackjack.play()
 
-    logging.info('{0}: {1} {2}'.format(args.games, state, reward))
+    logging.info('{0}: {1} {2}'.format(i, state, reward))
 
     #
     # calculate returns
@@ -40,8 +40,6 @@ for state in it.takewhile(lambda _: args.games > 0, states()):
 
     for (state, _) in episode:
         policy[state] = np.argmax(Q[state])
-
-    args.games -= 1
 
 V = np.zeros((21 - 12 + 1, 10 - 2 + 1))
 for (k, v) in values.items():
