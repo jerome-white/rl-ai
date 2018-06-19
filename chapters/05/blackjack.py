@@ -24,7 +24,7 @@ class Policy:
         return self.value
 
     def __bool__(self):
-        return self.cards < 2 or int(self) <= 21 and not self.stick()
+        return int(self) <= 21 and not self.stick()
 
     def deal(self, card):
         self.cards += 1
@@ -74,6 +74,10 @@ class Blackjack:
             self.dealer = Dealer(state.dealer, 1)
             self.face = state.dealer
 
+    def __str__(self):
+        iterable = map(int, (self.dealer, self.player))
+        return 'd: {0:2d}, p: {1:2d}'.format(*iterable)
+
     def play(self):
         episode = []
 
@@ -100,6 +104,6 @@ class Blackjack:
             reward = int(not self.dealer.isnatural())
         else:
             (p, d) = [ int(x) for x in (self.player, self.dealer) ]
-            reward = ((p > d) - (p < d)) # https://stackoverflow.com/a/11215908
+            reward = (p > d) - (p < d) # https://stackoverflow.com/a/11215908
 
         return (episode, reward)
