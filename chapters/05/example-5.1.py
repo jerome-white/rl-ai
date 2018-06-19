@@ -13,20 +13,24 @@ logging.basicConfig(level=logging.DEBUG,
                     datefmt='%H:%M:%S')
 
 def func(args):
+    (n, fill, ace) = args
+
     #
     # generate epsiode
     #
     blackjack = Blackjack()
     (episode, reward) = blackjack.play()
 
-    # logging.info('{0}: {1}'.format(args, reward))
+    logging.info(('[{0:'+str(fill)+'d}] {1} -> {2:2d}')
+                 .format(n, blackjack, reward))
 
     #
     # calculate returns
     #
     returns = cl.defaultdict(list)
     for (state, _) in episode:
-        returns[state].append(reward)
+        if ace ^ state.ace:
+            returns[state].append(reward)
 
     return returns
 
@@ -38,14 +42,15 @@ args = arguments.parse_args()
 
 with mp.Pool(args.workers) as pool:
     returns = cl.defaultdict(list)
-    for i in pool.imap_unordered(func, range(args.games)):
+
+    f = lambda x: (x, len(str(args.games)), args.with_ace)
+    for i in pool.imap_unordered(func, map(f, range(args.games))):
         for (k, v) in i.items():
             returns[k].extend(v)
 
 V = np.zeros((21 - 12 + 1, 10 - 1 + 1))
 for (k, v) in returns.items():
-    if args.with_ace ^ k.ace:
-        V[k.player - 12, k.dealer - 1] = np.mean(v)
+    V[k.player - 12, k.dealer - 1] = np.mean(v)
 
 ax = sns.heatmap(V, vmin=-1, vmax=1, cmap='BrBG')
 ax.invert_yaxis()
