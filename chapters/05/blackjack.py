@@ -65,10 +65,10 @@ class Blackjack:
 
             for (i, p) in enumerate((self.player, self.dealer)):
                 for j in range(2):
-                    card = next(deck)
+                    card = next(self.deck)
                     p.deal(card)
                     if i and not j:
-                        self.face = card
+                        self.face = card.value
         else:
             self.player = Player(state.player, 2, state.ace)
             self.dealer = Dealer(state.dealer, 1)
@@ -86,13 +86,13 @@ class Blackjack:
                 break
 
             try:
-                self.player.deal(next(deck))
+                self.player.deal(next(self.deck))
             except OverflowError:
                 return (episode, -1)
 
         while self.dealer:
             try:
-                self.dealer.deal(next(deck))
+                self.dealer.deal(next(self.deck))
             except OverflowError:
                 return (episode, 1)
 
