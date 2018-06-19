@@ -38,10 +38,13 @@ for (i, state) in zip(range(args.games), states()):
     for (state, action) in episode:
         Q[state][action].append(reward)
 
+    #
+    # calculate optimal policies
+    #
     for (state, _) in episode:
         policy[state] = np.argmax(Q[state])
 
 V = np.zeros((21 - 12 + 1, 10 - 2 + 1))
 for (k, v) in values.items():
     if args.with_ace ^ v.ace:
-        V[k.player, k.dealer] = float(v)
+        V[k.player, k.dealer] = np.mean(v)
