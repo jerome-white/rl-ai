@@ -1,9 +1,10 @@
 import logging
 import collections as cl
+import multiprocessing as mp
 from argparse import ArgumentParser
 
 import numpy as np
-import matplotlib as plt
+import seaborn as sns
 
 from blackjack import Blackjack
 
@@ -11,32 +12,43 @@ logging.basicConfig(level=logging.DEBUG,
                     format='[ %(asctime)s ] %(levelname)s: %(message)s',
                     datefmt='%H:%M:%S')
 
-arguments = ArgumentParser()
-arguments.add_argument('--games', type=int)
-arguments.add_argument('--with-ace', action='store_true')
-args = arguments.parse_args()
-
-returns = cl.defaultdict(list)
-
-for i in range(args.games):
+def func(args):
     #
     # generate epsiode
     #
     blackjack = Blackjack()
     (episode, reward) = blackjack.play()
 
-    logging.info('{0}: {1}'.format(i, reward))
+    # logging.info('{0}: {1}'.format(args, reward))
 
     #
     # calculate returns
     #
+    returns = cl.defaultdict(list)
     for (state, _) in episode:
         returns[state].append(reward)
+
+    return returns
+
+arguments = ArgumentParser()
+arguments.add_argument('--games', type=int)
+arguments.add_argument('--with-ace', action='store_true')
+arguments.add_argument('--workers', type=int, default=mp.cpu_count())
+args = arguments.parse_args()
+
+with mp.Pool(args.workers) as pool:
+    returns = cl.defaultdict(list)
+    for i in pool.imap_unordered(func, range(args.games)):
+        for (k, v) in i.items():
+            returns[k].extend(v)
 
 V = np.zeros((21 - 12 + 1, 10 - 1 + 1))
 for (k, v) in returns.items():
     if args.with_ace ^ k.ace:
         V[k.player - 12, k.dealer - 1] = np.mean(v)
 
-plt.imshow(V)
-plt.savefig('example-5.1.png')
+ax = sns.heatmap(V, vmin=-1, vmax=1, cmap='BrBG')
+ax.invert_yaxis()
+ax.set_xticklabels(['A'] + list(range(2, 11)))
+ax.set_yticklabels(range(12, 22))
+ax.get_figure().savefig('example-5.1.png')
