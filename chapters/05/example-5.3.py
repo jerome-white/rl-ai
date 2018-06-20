@@ -41,12 +41,12 @@ class GreedyPlayer(Player):
         super().__init__(value, cards, ace)
         self.Q = Q
 
-    def stick(self, facecard):
+    def _hit(self, facecard):
         if self.Q:
             state = State(int(self), facecard, self.ace)
             decision = bool(amax(state, self.Q))
         else:
-            decision = super().stick(facecard)
+            decision = super()._hit(facecard)
 
         return decision
 
