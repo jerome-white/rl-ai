@@ -15,14 +15,9 @@ logging.basicConfig(level=logging.DEBUG,
                     format='[ %(asctime)s ] %(levelname)s: %(message)s',
                     datefmt='%H:%M:%S')
 
-def amax(state, values):
-    if state in values:
-        args = np.argwhere(values[state] == np.max(values[state]))
-        best = args.flatten()
-    else:
-        best = range(2)
-
-    return np.random.choice(best)
+def fairmax(values):
+    best = np.argwhere(values == np.max(values))
+    return np.random.choice(best.flatten())
 
 class StateSpace:
     def __init__(self):
@@ -43,8 +38,8 @@ class GreedyPlayer(Player):
 
     def _hit(self, facecard):
         if self.Q:
-            state = State(int(self), facecard, self.ace)
-            decision = bool(amax(state, self.Q))
+            state = State(self.value, facecard, self.ace)
+            decision = bool(fairmax(self.Q[state]))
         else:
             decision = super()._hit(facecard)
 
@@ -84,7 +79,7 @@ for i in range(args.games):
     # calculate optimal policies
     #
     for (s, _) in episode:
-        policy[s] = amax(s, Q)
+        policy[s] = fairmax(Q[s])
 
 for a in (True, False):
     V = np.zeros(state.shape)
