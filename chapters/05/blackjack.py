@@ -38,8 +38,12 @@ class Policy:
             else:
                 self.value += 1
 
-        if self.value > 21:
-            raise OverflowError()
+        while self.value > 21:
+            if self.ace:
+                self.value -= 10
+                self.ace = False
+            else:
+                raise OverflowError()
 
     def isnatural(self):
         return self.cards == 2 and int(self) == 21
