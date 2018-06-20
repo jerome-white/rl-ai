@@ -81,24 +81,20 @@ class Blackjack:
     def play(self):
         episode = []
 
-        while True:
-            state = State(int(self.player), self.face, self.player.ace)
-            action = bool(self.player)
-            episode.append((state, action))
+        for (i, p) in enumerate((self.player, self.dealer)):
+            while True:
+                action = p.hit(self.face)
+                if not i:
+                    state = State(int(p), self.face, p.ace)
+                    episode.append((state, action))
+                if not action:
+                    break
 
-            if not action:
-                break
-
-            try:
-                self.player.deal(next(self.deck))
-            except OverflowError:
-                return (episode, -1)
-
-        while self.dealer:
-            try:
-                self.dealer.deal(next(self.deck))
-            except OverflowError:
-                return (episode, 1)
+                try:
+                    p.deal(next(self.deck))
+                except OverflowError:
+                    reward = 1 if i else -1
+                    return (episode, reward)
 
         if self.player.isnatural():
             reward = int(not self.dealer.isnatural())
