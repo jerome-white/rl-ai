@@ -14,7 +14,7 @@ logging.basicConfig(level=logging.DEBUG,
                     datefmt='%H:%M:%S')
 
 def func(args):
-    (n, fill, ace) = args
+    (i, ace) = args
 
     #
     # generate epsiode
@@ -22,8 +22,7 @@ def func(args):
     blackjack = Blackjack()
     (episode, reward) = blackjack.play()
 
-    logging.info(('[{0:'+str(fill)+'d}] {1} -> {2:2d}')
-                 .format(n, blackjack, reward))
+    logging.info('{1} -> {2:2d} [ {0} ]'.format(i, blackjack, reward))
 
     #
     # calculate returns
@@ -44,8 +43,8 @@ args = arguments.parse_args()
 with mp.Pool(args.workers) as pool:
     returns = cl.defaultdict(list)
 
-    f = lambda x: (x, len(str(args.games)), args.with_ace)
-    for i in pool.imap_unordered(func, map(f, range(args.games))):
+    iterable = map(lambda x: (x, args.with_ace), range(args.games))
+    for i in pool.imap_unordered(func, iterable):
         for (k, v) in i.items():
             returns[k].extend(v)
 
