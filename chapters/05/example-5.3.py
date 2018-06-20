@@ -15,6 +15,12 @@ def states():
         args = (range(12, 21 + 1), range(1, 10 + 1), (True, False))
         yield State(*map(random.choice, args))
 
+def afilter(episodes, aces):
+    for i in episodes:
+        (state, _) = i
+        if not(state.ace ^ aces):
+            yield i
+
 arguments = ArgumentParser()
 arguments.add_argument('--games', type=int)
 arguments.add_argument('--with-ace', action='store_true')
@@ -35,16 +41,11 @@ for (i, state) in zip(range(args.games), states()):
     #
     # calculate returns
     #
-    for (state, action) in episode:
+    for (state, action) in afilter(episode, args.with_ace):
         Q[state][action].append(reward)
 
     #
     # calculate optimal policies
     #
-    for (state, _) in episode:
+    for (state, _) in afilter(episode, args.with_ace):
         policy[state] = np.argmax(Q[state])
-
-V = np.zeros((21 - 12 + 1, 10 - 2 + 1))
-for (k, v) in values.items():
-    if args.with_ace ^ v.ace:
-        V[k.player, k.dealer] = np.mean(v)
