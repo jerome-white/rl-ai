@@ -18,9 +18,9 @@ logging.basicConfig(level=logging.DEBUG,
 def amax(state, values):
     if state in values:
         args = np.argwhere(values[state] == max(values[state]))
-        best = args.flatten().astype(bool)
+        best = args.flatten()
     else:
-        best = (True, False)
+        best = range(2)
 
     return np.random.choice(best)
 
@@ -44,7 +44,7 @@ class GreedyPlayer(Player):
     def stick(self, facecard):
         if self.Q:
             state = State(int(self), facecard, self.ace)
-            decision = amax(state, Q)
+            decision = bool(amax(state, self.Q))
         else:
             decision = super().stick(facecard)
 
@@ -61,30 +61,30 @@ policy = {}
 state = StateSpace()
 
 for i in range(args.games):
-    s = next(state)
+    st = next(state)
 
     #
     # generate epsiode
     #
     player = ft.partial(GreedyPlayer, Q=Q)
-    blackjack = Blackjack(s, player)
+    blackjack = Blackjack(st, player)
     (episode, reward) = blackjack.play()
 
-    logging.info('{0}: {1} {2}'.format(i, s, reward))
+    logging.info('{1} -> {2:2d} [ {0} ]'.format(i, blackjack, reward))
 
     #
     # calculate returns
     #
-    for (s_, a) in episode:
-        ptr = returns[s_][a]
+    for (s, a) in episode:
+        ptr = returns[s][a]
         ptr.append(reward)
-        Q[s_][a] = np.mean(ptr)
+        Q[s][a] = np.mean(ptr)
 
     #
     # calculate optimal policies
     #
-    for (s_, _) in episode:
-        policy[s_] = amax(s, Q)
+    for (s, _) in episode:
+        policy[s] = amax(s, Q)
 
 for a in (True, False):
     V = np.zeros(state.shape)
