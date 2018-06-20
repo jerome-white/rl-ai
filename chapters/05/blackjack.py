@@ -24,7 +24,7 @@ class Policy:
         return self.value
 
     def hit(self, facecard):
-        return int(self) <= 21 and self._hit(facecard)
+        return self.value <= 21 and self._hit(facecard)
 
     def deal(self, card):
         self.cards += 1
@@ -46,14 +46,14 @@ class Policy:
                 raise OverflowError()
 
     def isnatural(self):
-        return self.cards == 2 and int(self) == 21
+        return self.cards == 2 and self.value == 21
 
     def _hit(self, facecard):
         raise NotImplementedError()
 
 class Dealer(Policy):
     def _hit(self, facecard):
-        return int(self) < 17
+        return self.value < 17
 
     def deal(self, card):
         if self.cards == 1 and self.value == 1 and card.value > 1:
@@ -63,7 +63,7 @@ class Dealer(Policy):
 
 class Player(Policy):
     def _hit(self, facecard):
-        return int(self) < 20
+        return self.value < 20
 
 class Blackjack:
     def __init__(self, state=None, player=Player):
