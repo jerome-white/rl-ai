@@ -23,8 +23,8 @@ class Policy:
     def __int__(self):
         return self.value
 
-    def __bool__(self):
-        return int(self) <= 21 and not self.stick()
+    def hit(self, facecard):
+        return int(self) <= 21 and not self.stick(facecard)
 
     def deal(self, card):
         self.cards += 1
@@ -44,15 +44,15 @@ class Policy:
     def isnatural(self):
         return self.cards == 2 and int(self) == 21
 
-    def stick(self):
+    def stick(self, facecard):
         raise NotImplementedError()
 
 class Dealer(Policy):
-    def stick(self):
+    def stick(self, facecard):
         return int(self) >= 17
 
 class Player(Policy):
-    def stick(self):
+    def stick(self, facecard):
         return 20 <= int(self) <= 21
 
 class Blackjack:
