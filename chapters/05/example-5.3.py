@@ -15,11 +15,20 @@ logging.basicConfig(level=logging.DEBUG,
                     format='[ %(asctime)s ] %(levelname)s: %(message)s',
                     datefmt='%H:%M:%S')
 
+def amax(state, values):
+    if state in values:
+        args = np.argwhere(values[state] == max(values[state]))
+        best = args.flatten().astype(bool)
+    else:
+        best = (True, False)
+
+    return np.random.choice(best)
+
 class StateSpace:
     def __init__(self):
         args = (range(12, 21 + 1), range(1, 10 + 1), (True, False))
         self.args = tuple(map(tuple, args))
-        self.shape = tuple(map(len, it.islice(self.arg, 2)))
+        self.shape = tuple(map(len, it.islice(self.args, 2)))
 
     def __iter__(self):
         yield from it.starmap(State, it.product(*self.args))
@@ -35,12 +44,7 @@ class GreedyPlayer(Player):
     def stick(self, facecard):
         if self.Q:
             state = State(int(self), facecard, self.ace)
-            if state in self.Q:
-                args = np.argwhere(self.Q[state] == max(self.Q[state]))
-                best = args.flatten().astype(bool)
-            else:
-                best = (True, False)
-            decision = np.random.choice(best)
+            decision = amax(state, Q)
         else:
             decision = super().stick(facecard)
 
@@ -80,7 +84,7 @@ for i in range(args.games):
     # calculate optimal policies
     #
     for (s_, _) in episode:
-        policy[s_] = np.argmax(Q[s])
+        policy[s_] = amax(s, Q)
 
 for a in (True, False):
     V = np.zeros(state.shape)
