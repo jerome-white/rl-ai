@@ -70,7 +70,7 @@ class Blackjack:
                     if i and not j:
                         self.face = card.value
         else:
-            self.player = player(state.player, 2, state.ace)
+            self.player = player(value=state.player, cards=2, ace=state.ace)
             self.dealer = Dealer(state.dealer, 1)
             self.face = state.dealer
 
