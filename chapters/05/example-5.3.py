@@ -56,7 +56,7 @@ args = arguments.parse_args()
 
 returns = cl.defaultdict(lambda: cl.defaultdict(list))
 Q = cl.defaultdict(lambda: [ -np.inf ] * len(('hit', 'stick')))
-policy = {}
+policy = cl.defaultdict(float)
 
 state = StateSpace()
 
