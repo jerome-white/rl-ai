@@ -17,7 +17,7 @@ logging.basicConfig(level=logging.DEBUG,
 
 def amax(state, values):
     if state in values:
-        args = np.argwhere(values[state] == max(values[state]))
+        args = np.argwhere(values[state] == np.max(values[state]))
         best = args.flatten()
     else:
         best = range(2)
@@ -55,7 +55,7 @@ arguments.add_argument('--games', type=int)
 args = arguments.parse_args()
 
 returns = cl.defaultdict(lambda: cl.defaultdict(list))
-Q = cl.defaultdict(lambda: [ -np.inf ] * len(('hit', 'stick')))
+Q = cl.defaultdict(lambda: [ 0 ] * len(('hit', 'stick')))
 policy = cl.defaultdict(float)
 
 state = StateSpace()
