@@ -24,7 +24,7 @@ class Policy:
         return self.value
 
     def hit(self, facecard):
-        return self.value <= 21 and self._hit(facecard)
+        return self.value < 21 and self._hit(facecard)
 
     def deal(self, card):
         self.cards += 1
