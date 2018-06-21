@@ -55,6 +55,7 @@ class Dealer(Policy):
         if self.cards == 1 and self.value == 1 and card.value != 1:
             self.value = 11
             self.ace = True
+
         super().deal(card)
 
 class Player(Policy):
