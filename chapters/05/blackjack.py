@@ -8,8 +8,8 @@ class Deck(list):
     def __init__(self):
         for i in range(4):
             for j in range(1, 13):
-                value = min(j, 10)
-                self.append(Card(i, value))
+                card = Card(i, min(j, 10))
+                self.append(card)
 
     def __next__(self):
         return random.choice(self)
