@@ -29,14 +29,10 @@ class Policy:
     def deal(self, card):
         self.cards += 1
 
-        if card.value > 1:
-            self.value += card.value
-        else:
-            if self.value + 11 <= 21:
-                self.value += 11
-                self.ace = True
-            else:
-                self.value += 1
+        self.value += card.value
+        if card.value == 1 and self.value + 10 <= 21:
+            self.value += 10
+            self.ace = True
 
         while self.value > 21:
             if self.ace:
@@ -56,7 +52,7 @@ class Dealer(Policy):
         return self.value < 17
 
     def deal(self, card):
-        if self.cards == 1 and self.value == 1 and card.value > 1:
+        if self.cards == 1 and self.value == 1 and card.value != 1:
             self.value = 11
             self.ace = True
         super().deal(card)
