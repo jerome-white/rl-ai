@@ -28,8 +28,7 @@ class Policy:
 
         self.value += card.value
         if card.value == 1 and self.value + 10 <= 21:
-            self.value += 10
-            self.ace = True
+            self.use_ace()
 
         while self.value > 21:
             if self.ace:
@@ -41,6 +40,10 @@ class Policy:
     def isnatural(self):
         return self.cards == 2 and self.value == 21
 
+    def use_ace(self):
+        self.value += 10
+        self.ace = True
+
     def hit(self, facecard):
         raise NotImplementedError()
 
@@ -50,8 +53,7 @@ class Dealer(Policy):
 
     def deal(self, card):
         if self.cards == 1 and self.value == 1 and card.value != 1:
-            self.value = 11
-            self.ace = True
+            self.use_ace()
 
         super().deal(card)
 
