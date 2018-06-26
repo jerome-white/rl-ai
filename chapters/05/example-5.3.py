@@ -48,7 +48,7 @@ args = arguments.parse_args()
 state = StateSpace()
 
 returns = cl.defaultdict(list)
-Q = cl.defaultdict(float)
+values = cl.defaultdict(float)
 policy = {}
 
 for i in range(args.games):
@@ -68,13 +68,13 @@ for i in range(args.games):
     #
     for e in episode:
         returns[e].append(reward)
-        Q[e] = np.mean(returns[e])
+        values[e] = np.mean(returns[e])
 
     #
     # calculate optimal policies
     #
     for (s, _) in episode:
-        values = [ Q[(s, x)] for x in map(bool, range(2)) ]
+        values = [ values[(s, x)] for x in map(bool, range(2)) ]
         best = np.argwhere(values == np.max(values))
         policy[s] = np.random.choice(best.flatten())
 
@@ -84,7 +84,7 @@ for a in (True, False):
 
     for s in filter(lambda x: x.ace == a, state):
         index = (s.player - 12, s.dealer - 1)
-        V[index] = Q[(s, a)]
+        V[index] = values[(s, a)]
         pi[index] = policy[s]
 
     for (i, j) in zip(('V', 'pi'), (V, pi)):
