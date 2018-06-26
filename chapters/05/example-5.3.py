@@ -48,7 +48,7 @@ args = arguments.parse_args()
 state = StateSpace()
 
 returns = cl.defaultdict(list)
-values = cl.defaultdict(float)
+values = cl.defaultdict(lambda: random.uniform(-1, 1))
 policy = {}
 
 for i in range(args.games):
