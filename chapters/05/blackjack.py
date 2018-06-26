@@ -7,7 +7,7 @@ State = cl.namedtuple('State', 'player, dealer, ace')
 class Deck(list):
     def __init__(self):
         for i in range(4):
-            for j in range(1, 13):
+            for j in range(1, 14):
                 card = Card(i, min(j, 10))
                 self.append(card)
 
