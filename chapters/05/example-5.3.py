@@ -78,18 +78,18 @@ for i in range(args.games):
         best = np.argwhere(vals == np.max(vals))
         policy[s] = np.random.choice(best.flatten())
 
-for a in (True, False):
+for ace in (True, False):
     V = np.zeros(state.shape)
     pi = np.zeros_like(V)
 
-    for s in filter(lambda x: x.ace == a, state):
+    for s in filter(lambda x: x.ace == ace, state):
         index = (s.player - 12, s.dealer - 1)
-        V[index] = values[(s, a)]
         pi[index] = policy[s]
+        V[index] = values[(s, pi[index])]
 
     for (i, j) in zip(('V', 'pi'), (V, pi)):
         plt.clf()
-        name = 'example-5.3_{0}-{1}.png'.format(i, a)
+        name = 'example-5.3_{0}-{1}.png'.format(i, ace)
 
         ax = sns.heatmap(j, vmin=-1, vmax=1, cmap='BrBG')
         ax.invert_yaxis()
