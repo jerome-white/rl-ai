@@ -15,10 +15,6 @@ logging.basicConfig(level=logging.DEBUG,
                     format='[ %(asctime)s ] %(levelname)s: %(message)s',
                     datefmt='%H:%M:%S')
 
-def fairmax(values):
-    best = np.argwhere(values == np.max(values))
-    return np.random.choice(best.flatten())
-
 class StateSpace:
     def __init__(self):
         args = (range(12, 21 + 1), range(1, 10 + 1), (True, False))
@@ -32,14 +28,14 @@ class StateSpace:
         return State(*map(random.choice, self.args))
 
 class GreedyPlayer(Player):
-    def __init__(self, Q, value=0, cards=0, ace=False):
+    def __init__(self, policy, value=0, cards=0, ace=False):
         super().__init__(value, cards, ace)
-        self.Q = Q
+        self.policy = policy
 
     def hit(self, facecard):
-        if self.Q:
-            state = State(self.value, facecard, self.ace)
-            decision = bool(fairmax(self.Q[state]))
+        state = State(self.value, facecard, self.ace)
+        if state in self.policy:
+            decision = self.policy[state]
         else:
             decision = super().hit(facecard)
 
@@ -49,11 +45,11 @@ arguments = ArgumentParser()
 arguments.add_argument('--games', type=int)
 args = arguments.parse_args()
 
-returns = cl.defaultdict(lambda: cl.defaultdict(list))
-Q = cl.defaultdict(lambda: [ 0 ] * len(('hit', 'stick')))
-policy = cl.defaultdict(float)
-
 state = StateSpace()
+
+returns = cl.defaultdict(list)
+Q = cl.defaultdict(float)
+policy = {}
 
 for i in range(args.games):
     st = next(state)
@@ -61,7 +57,7 @@ for i in range(args.games):
     #
     # generate epsiode
     #
-    player = ft.partial(GreedyPlayer, Q=Q)
+    player = ft.partial(GreedyPlayer, policy=policy)
     blackjack = Blackjack(st, player)
     (episode, reward) = blackjack.play()
 
@@ -70,16 +66,17 @@ for i in range(args.games):
     #
     # calculate returns
     #
-    for (s, a) in episode:
-        ptr = returns[s][a]
-        ptr.append(reward)
-        Q[s][a] = np.mean(ptr)
+    for e in episode:
+        returns[e].append(reward)
+        Q[e] = np.mean(returns[e])
 
     #
     # calculate optimal policies
     #
     for (s, _) in episode:
-        policy[s] = fairmax(Q[s])
+        values = [ Q[(s, x)] for x in map(bool, range(2)) ]
+        best = np.argwhere(values == np.max(values))
+        policy[s] = np.random.choice(best.flatten())
 
 for a in (True, False):
     V = np.zeros(state.shape)
@@ -87,7 +84,7 @@ for a in (True, False):
 
     for s in filter(lambda x: x.ace == a, state):
         index = (s.player - 12, s.dealer - 1)
-        V[index] = Q[s][a]
+        V[index] = Q[(s, a)]
         pi[index] = policy[s]
 
     for (i, j) in zip(('V', 'pi'), (V, pi)):
