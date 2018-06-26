@@ -74,8 +74,8 @@ for i in range(args.games):
     # calculate optimal policies
     #
     for (s, _) in episode:
-        values = [ values[(s, x)] for x in map(bool, range(2)) ]
-        best = np.argwhere(values == np.max(values))
+        vals = [ values[(s, x)] for x in map(bool, range(2)) ]
+        best = np.argwhere(vals == np.max(vals))
         policy[s] = np.random.choice(best.flatten())
 
 for a in (True, False):
