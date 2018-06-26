@@ -20,9 +20,6 @@ class Policy:
         self.cards = cards
         self.ace = ace
 
-    def __int__(self):
-        return self.value
-
     def __bool__(self):
         return self.cards == 2 and self.value == 21
 
@@ -43,6 +40,9 @@ class Policy:
     def use_ace(self):
         self.value += 10
         self.ace = True
+
+    def tostate(self, facecard):
+        return State(self.value, facecard, self.ace)
 
     def hit(self, facecard):
         raise NotImplementedError()
@@ -66,32 +66,35 @@ class Blackjack:
         self.deck = Deck()
 
         if state is None:
-            self.player = player()
-            self.dealer = Dealer()
+            self.table = (player(), Dealer())
 
-            for (i, p) in enumerate((self.player, self.dealer)):
-                for j in range(2):
+            for (i, p) in enumerate(self.table):
+                for _ in range(2):
                     card = next(self.deck)
                     p.deal(card)
-                    if i and not j:
+
+                    # Is this the dealers first card?
+                    if i and p.cards == 1:
                         self.face = card.value
         else:
-            self.player = player(value=state.player, cards=2, ace=state.ace)
-            self.dealer = Dealer(state.dealer, 1)
+            self.table = (
+                player(value=state.player, cards=2, ace=state.ace),
+                Dealer(state.dealer, 1),
+            )
             self.face = state.dealer
 
     def __str__(self):
-        iterable = map(int, (self.dealer, self.player))
-        return 'd: {0:2d}, p: {1:2d}'.format(*iterable)
+        msg = [ '{0}: {1:2d}'.format(*x) for x in zip(('p', 'd'), self.table) ]
+        return ', '.join(msg)
 
     def play(self):
         episode = []
 
-        for (i, p) in enumerate((self.player, self.dealer)):
+        for (i, p) in enumerate(self.table):
             while True:
                 action = p.hit(self.face)
                 if not i:
-                    state = State(int(p), self.face, p.ace)
+                    state = State(p.value, self.face, p.ace)
                     episode.append((state, action))
                 if not action:
                     break
@@ -102,14 +105,14 @@ class Blackjack:
                     reward = 1 if i else -1
                     return (episode, reward)
 
-        naturals = [ bool(x) for x in (self.player, self.dealer) ]
+        naturals = [ bool(x) for x in self.table ]
         if all(naturals):
             reward = 0
-        elif not any(naturals):
-            (p, d) = map(int, (self.player, self.dealer))
-            reward = (p > d) - (p < d) # https://stackoverflow.com/a/11215908
-        else:
-            (p, d) = naturals
+        elif any(naturals):
+            (p, _) = naturals
             reward = 1 if p else -1
+        else:
+            (p, d) = map(int, self.table)
+            reward = (p > d) - (p < d) # https://stackoverflow.com/a/11215908
 
         return (episode, reward)
