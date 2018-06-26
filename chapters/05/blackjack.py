@@ -23,6 +23,9 @@ class Policy:
     def __int__(self):
         return self.value
 
+    def __bool__(self):
+        return self.cards == 2 and self.value == 21
+
     def deal(self, card):
         self.cards += 1
 
@@ -36,9 +39,6 @@ class Policy:
                 self.ace = False
             else:
                 raise OverflowError()
-
-    def isnatural(self):
-        return self.cards == 2 and self.value == 21
 
     def use_ace(self):
         self.value += 10
@@ -102,10 +102,14 @@ class Blackjack:
                     reward = 1 if i else -1
                     return (episode, reward)
 
-        if self.player.isnatural():
-            reward = int(not self.dealer.isnatural())
-        else:
+        naturals = [ bool(x) for x in (self.player, self.dealer) ]
+        if all(naturals):
+            reward = 0
+        elif not any(naturals):
             (p, d) = map(int, (self.player, self.dealer))
             reward = (p > d) - (p < d) # https://stackoverflow.com/a/11215908
+        else:
+            (p, d) = naturals
+            reward = 1 if p else -1
 
         return (episode, reward)
