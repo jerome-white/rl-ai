@@ -42,7 +42,7 @@ class GreedyPlayer(Player):
         return decision
 
 arguments = ArgumentParser()
-arguments.add_argument('--games', type=int)
+arguments.add_argument('--games', type=int, default=500000)
 args = arguments.parse_args()
 
 state = StateSpace()
