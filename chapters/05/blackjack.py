@@ -26,6 +26,9 @@ class Policy:
     def __bool__(self):
         return self.cards == 2 and self.value == 21
 
+    def __str__(self):
+        return '{0:2d}/{1}/{2:d}'.format(self.value, self.cards, self.ace)
+
     def deal(self, card):
         self.cards += 1
 
@@ -87,7 +90,7 @@ class Blackjack:
             self.face = state.dealer
 
     def __str__(self):
-        msg = [ '{0}: {1:2d}'.format(*x) for x in zip(('p', 'd'), self.table) ]
+        msg = [ '{0}: {1}'.format(*x) for x in zip(('p', 'd'), self.table) ]
         return ', '.join(msg)
 
     def play(self):
