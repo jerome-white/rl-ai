@@ -100,7 +100,7 @@ class Blackjack:
             while True:
                 action = p.hit(self.face)
                 if not i:
-                    state = State(p.value, self.face, p.ace)
+                    state = p.tostate(self.face)
                     episode.append((state, action))
                 if not action:
                     break
@@ -111,7 +111,7 @@ class Blackjack:
                     reward = 1 if i else -1
                     return (episode, reward)
 
-        naturals = [ bool(x) for x in self.table ]
+        naturals = list(map(bool, self.table))
         if all(naturals):
             reward = 0
         elif any(naturals):
