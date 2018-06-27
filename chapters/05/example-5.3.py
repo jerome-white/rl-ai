@@ -35,7 +35,7 @@ class GreedyPlayer(Player):
     def hit(self, facecard):
         state = self.tostate(facecard)
         if state in self.policy:
-            decision = self.policy[state]
+            decision = bool(self.policy[state])
         else:
             decision = super().hit(facecard)
 
