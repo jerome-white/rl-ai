@@ -20,6 +20,9 @@ class Policy:
         self.cards = cards
         self.ace = ace
 
+    def __int__(self):
+        return self.value
+
     def __bool__(self):
         return self.cards == 2 and self.value == 21
 
