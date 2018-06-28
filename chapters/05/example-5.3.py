@@ -31,13 +31,15 @@ class GreedyPlayer(Player):
     def __init__(self, policy, value=0, cards=0, ace=False):
         super().__init__(value, cards, ace)
         self.policy = policy
+        self.initial = True
 
     def hit(self, facecard):
         state = self.tostate(facecard)
-        if state in self.policy:
-            decision = bool(self.policy[state])
+        if self.initial or state not in self.policy:
+            self.initial = False
+            decision = random.choice((True, False))
         else:
-            decision = super().hit(facecard)
+            decision = bool(self.policy[state])
 
         return decision
 
