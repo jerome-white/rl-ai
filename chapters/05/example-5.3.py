@@ -36,15 +36,15 @@ class GreedyPlayer(Player):
     def hit(self, facecard):
         if self.initial:
             self.initial = False
-            decision = random.choice((True, False))
+            action = random.choice((True, False))
         else:
             state = self.tostate(facecard)
             if state in self.policy:
-                decision = self.policy[state]
+                action = self.policy[state]
             else:
-                decision = super().hit(facecard)
+                action = super().hit(facecard)
 
-        return decision
+        return action
 
 arguments = ArgumentParser()
 arguments.add_argument('--games', type=int, default=500000)
