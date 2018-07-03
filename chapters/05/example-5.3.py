@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 
 from blackjack import State, Player, Blackjack
 
-logging.basicConfig(level=logging.DEBUG,
+logging.basicConfig(level=logging.INFO,
                     format='[ %(asctime)s ] %(levelname)s: %(message)s',
                     datefmt='%H:%M:%S')
 
@@ -66,22 +66,25 @@ for i in range(args.games):
     blackjack = Blackjack(st, player)
     (episode, reward) = blackjack.play()
 
-    logging.info('{1} -> {2:2d} [ {0} ]'.format(i, blackjack, reward))
-
     #
     # calculate returns
     #
-    for e in episode:
+    for (j, e) in enumerate(episode):
         returns[e].append(reward)
         values[e] = np.mean(returns[e])
 
     #
     # calculate optimal policies
     #
-    for (s, _) in episode:
+    for (s, a) in episode:
         vals = [ values[(s, x)] for x in range(2) ]
         best = np.argwhere(vals == np.max(vals))
         policy[s] = np.random.choice(best.flatten())
+
+        logging.debug('{}: {} a:{} r:{} - pi:{} Q:{}'
+                      .format(i, s, a, reward, policy[s], vals))
+
+    logging.info('{0}: {1} -> {2:2d}'.format(i, blackjack, reward))
 
 for ace in (True, False):
     V = np.zeros(state.shape)
