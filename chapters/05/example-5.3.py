@@ -34,12 +34,15 @@ class GreedyPlayer(Player):
         self.initial = True
 
     def hit(self, facecard):
-        state = self.tostate(facecard)
-        if self.initial or state not in self.policy:
+        if self.initial:
             self.initial = False
             decision = random.choice((True, False))
         else:
-            decision = bool(self.policy[state])
+            state = self.tostate(facecard)
+            if state in self.policy:
+                decision = self.policy[state]
+            else:
+                decision = super().hit(facecard)
 
         return decision
 
