@@ -8,4 +8,6 @@ My attempts at activities in "[Reinforcement Learning: an introduction](http://a
 
 * [Shangtong Zhang](https://github.com/ShangtongZhang/reinforcement-learning-an-introduction)
 
+* [Denny Britz](https://github.com/dennybritz/reinforcement-learning)
+
 * [ETH Zurich -- IDSC](https://github.com/idsc-frazzoli/subare)
