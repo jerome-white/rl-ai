@@ -28,13 +28,13 @@ def func(args):
 
     state = State(13, 2, True)
     actions = (True, False)
-    b = len(actions)
+    b = 1 / len(actions)
 
     Q = cl.defaultdict(float)
     C = cl.defaultdict(int)
 
-    rewards = []
-    weights = []
+    ordinary = []
+    weighted = []
 
     for i in range(games):
         blackjack = Blackjack(state, RandomPlayer)
@@ -50,18 +50,19 @@ def func(args):
 
             (s, a) = e
             player = Player(s.player, 2, s.ace)
-            p = player.hit(s.dealer) == a
-            W *= p / b
+            if a != player.hit(s.dealer):
+                break
+            W *= 1 / b
 
-        rewards.append(W * G)
-        weights.append(W)
+        ordinary.append(W * G)
+        weighted.append(W)
 
     r = sum(rewards)
 
-    return ( r / x for x in (len(rewards), sum(weights)) )
+    return ( r / x for x in (len(rewards), sum(weighted)) )
 
 arguments = ArgumentParser()
-arguments.add_argument('--games', type=int, default=500000)
+arguments.add_argument('--games', type=int, default=10000)
 arguments.add_argument('--runs', type=int, default=100)
 arguments.add_argument('--gamma', type=int, default=1)
 arguments.add_argument('--workers', type=int, default=mp.cpu_count())
