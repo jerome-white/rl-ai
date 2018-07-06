@@ -43,7 +43,7 @@ def func(args):
         G = 0
         W = 1
 
-        for e in it.takewhile(lambda _: W, episode):
+        for e in it.takewhile(lambda _: W, reversed(episode)):
             G = gamma * G + reward
             C[e] += W
             Q[e] += (W / C[e]) * (G - Q[e])
