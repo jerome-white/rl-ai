@@ -49,8 +49,11 @@ def func(args):
             Q[e] += (W / C[e]) * (G - Q[e])
 
             (s, a) = e
-            player = Player(s.player, 2, s.ace)
-            if a != player.hit(s.dealer):
+            # player = Player(s.player, 2, s.ace)
+            # action = player.hit(s.dealer)
+            action = fairmax(Q, s)
+
+            if a != action:
                 break
             W *= 1 / b
 
