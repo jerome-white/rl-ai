@@ -9,6 +9,7 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 
+import blackjack as bj
 from blackjack import State, Player, Blackjack
 
 logging.basicConfig(level=logging.INFO,
@@ -77,9 +78,7 @@ for i in range(args.games):
     # calculate optimal policies
     #
     for (s, a) in episode:
-        vals = [ values[(s, x)] for x in range(2) ]
-        best = np.argwhere(vals == np.max(vals))
-        policy[s] = np.random.choice(best.flatten())
+        policy[s] = bj.fairmax(values, s)
 
         logging.debug('{}: {} a:{} r:{} - pi:{} Q:{}'
                       .format(i, s, a, reward, policy[s], vals))

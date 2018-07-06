@@ -1,8 +1,16 @@
 import random
 import collections as cl
 
+import numpy as np
+
 Card = cl.namedtuple('Card', 'suit, value')
 State = cl.namedtuple('State', 'player, dealer, ace')
+
+def fairmax(Q, state):
+    vals = [ Q[(state, x)] for x in range(2) ]
+    best = np.argwhere(vals == np.max(vals))
+
+    return np.random.choice(best.flatten())
 
 class Deck(list):
     def __init__(self):
