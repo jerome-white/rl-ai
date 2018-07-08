@@ -1,6 +1,7 @@
 import csv
 import random
 import logging
+import operator as op
 import itertools as it
 import functools as ft
 import collections as cl
@@ -11,6 +12,7 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 
+State = cl.namedtuple('State', 'position, velocity')
 _Vector = cl.namedtuple('_Vector', 'x, y')
 
 class Vector(_Vector):
@@ -18,15 +20,19 @@ class Vector(_Vector):
         super(Vector, cls).__new__(cls, x, y)
 
     def __add__(self, other):
-        components = []
-        for (i, j) in zip(self, other):
-            dimension = max(0, min(i + j, 5))
-            components.append(dimension)
+        return type(self)(it.starmap(op.add, zip(self, other)))
 
-        return type(self)(*components)
+    def __sub__(self, other):
+        return type(self)(it.starmap(op.sub, zip(self, other)))
+
+    def __gt__(self, other):
+        return all(it.starmap(op.gt, zip(self, other)))
 
     def __bool__(self):
         return self.x or self.y
+
+    def clip(self):
+        return type(self)(it.starmap(lambda x: np.clip(x, 0, 4), self))
 
 class Track:
     def __init__(self, track, start='s', finish='f', out='.'):
@@ -52,40 +58,53 @@ class Track:
 
     def __getitem__(self, key):
         assert(type(key) == Vector)
-
-        if any([ x < 0 for x in key ]) or not self.track[key.x][key.y]:
-            raise IndexError(key)
-
         return self.track[key.x][key.y]
 
-class Car:
-    def __init__(self, position, velocity):
-        self.position = position
-        self.velocity = velocity
+    def navigate(position, velocity):
+        iterable = it.product(*map(lambda x: range(x + 1), velocity))
+        for i in it.starmap(Vector, filter(lambda x: any(x), iterable)):
+            pos = position + i
+            inbounds = all([ x >= 0 for x in pos ]) and self.track[pos]
+            yield (pos, inbounds)
 
 class Race:
-    def __init__(self, car, track):
-        self.car = car
+    def __init__(self, state, track, reward=-1, penalty=4):
+        self.state = state
         self.track = track
+        self.reward = reward
+        self.penalty = penalty
 
     def __iter__(self):
         return self
 
     def __next__(self):
+        #
+        # Select and take an action
+        #
         while True:
             action = Vector(*[ random.randint(-1, 1) for _ in range(2) ])
-            self.velocity += action
-            if self.velocity:
+            velocity = (self.state.velocity + action).clip()
+            if velocity:
                 break
 
+        route = list(self.track.navigate(self.state.position, velocity))
+        (position, inbounds) = max(route, key=op.itemgetter(0))
 
-        try:
-            self.state = self.track[advance]
-            reward = -1
-            if self.state in self.track.finish:
-                raise StopIteration()
-        except IndexError:
+        if not inbounds:
             reward = -5
+        elif not all(map(op.itemgetter(1), route)):
+            elegible = [ x for (x, y) in route if y ]
+            if not elegible:
+                for (i, j) in route:
+                    if j and not any(i - self.state.position):
+                        elegible.append(j)
+                assert(elegible)
+            position = max(elegible)
+            reward = -5
+        else:
+            reward = -1
+
+        self.state = State(position, velocity)
 
         return (self.state, action, reward)
 
