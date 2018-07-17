@@ -21,10 +21,7 @@ class Vector(_Vector):
         return type(self)(*it.starmap(op.add, zip(self, other)))
 
     def __gt__(self, other):
-        return all(it.starmap(op.gt, zip(self, other)))
-
-    def __bool__(self):
-        return any(self)
+        return self.x < other.x or self.y > other.y
 
     def __str__(self):
         return ','.join(map(str, self))
