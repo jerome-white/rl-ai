@@ -90,7 +90,7 @@ class Race:
         while True:
             action = random.choice(list(actions()))
             velocity = (self.state.velocity + action).clip()
-            if velocity:
+            if velocity != self.state.velocity:
                 break
 
         #
