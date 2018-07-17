@@ -8,8 +8,6 @@ from pathlib import Path
 from argparse import ArgumentParser
 
 import numpy as np
-# import seaborn as sns
-# import matplotlib.pyplot as plt
 
 State = cl.namedtuple('State', 'position, velocity')
 Transition = cl.namedtuple('Transition', 'state, action, reward')
