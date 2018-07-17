@@ -23,6 +23,9 @@ class Vector(_Vector):
     def __gt__(self, other):
         return self.x < other.x or self.y > other.y
 
+    def __bool__(self):
+        return any(self)
+
     def __str__(self):
         return ','.join(map(str, self))
 
@@ -90,7 +93,7 @@ class Race:
         while True:
             action = random.choice(list(actions()))
             velocity = (self.state.velocity + action).clip()
-            if velocity != self.state.velocity:
+            if velocity:
                 break
 
         #
