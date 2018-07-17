@@ -20,7 +20,7 @@ class Vector(_Vector):
         return super(Vector, cls).__new__(cls, x, y)
 
     def __add__(self, other):
-        return type(self)(self.x - other.x, self.y + other.y)
+        return type(self)(*it.starmap(op.add, zip(self, other)))
 
     def __gt__(self, other):
         return all(it.starmap(op.gt, zip(self, other)))
@@ -33,6 +33,9 @@ class Vector(_Vector):
 
     def __repr__(self):
         return str(self)
+
+    def advance(self, other):
+        return type(self)(self.x - other.x, self.y + other.y)
 
     def clip(self):
         return type(self)(*map(lambda x: np.clip(x, 0, 4), self))
@@ -68,7 +71,7 @@ class Track:
     def navigate(self, position, velocity):
         iterable = it.product(*map(lambda x: range(x + 1), velocity))
         for i in it.starmap(Vector, filter(lambda x: any(x), iterable)):
-            pos = position + i
+            pos = position.advance(i)
             yield (pos, self[pos])
 
 class Race:
