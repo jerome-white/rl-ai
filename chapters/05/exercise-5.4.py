@@ -3,36 +3,39 @@ import random
 import logging
 import operator as op
 import itertools as it
-import functools as ft
 import collections as cl
 from pathlib import Path
 from argparse import ArgumentParser
 
 import numpy as np
-import seaborn as sns
-import matplotlib.pyplot as plt
+# import seaborn as sns
+# import matplotlib.pyplot as plt
 
 State = cl.namedtuple('State', 'position, velocity')
+Transition = cl.namedtuple('Transition', 'state, action, reward')
 _Vector = cl.namedtuple('_Vector', 'x, y')
 
 class Vector(_Vector):
     def __new__(cls, x, y):
-        super(Vector, cls).__new__(cls, x, y)
+        return super(Vector, cls).__new__(cls, x, y)
 
     def __add__(self, other):
-        return type(self)(it.starmap(op.add, zip(self, other)))
-
-    def __sub__(self, other):
-        return type(self)(it.starmap(op.sub, zip(self, other)))
+        return type(self)(self.x - other.x, self.y + other.y)
 
     def __gt__(self, other):
         return all(it.starmap(op.gt, zip(self, other)))
 
     def __bool__(self):
-        return self.x or self.y
+        return any(self)
+
+    def __str__(self):
+        return ','.join(map(str, self))
+
+    def __repr__(self):
+        return str(self)
 
     def clip(self):
-        return type(self)(it.starmap(lambda x: np.clip(x, 0, 4), self))
+        return type(self)(*map(lambda x: np.clip(x, 0, 4), self))
 
 class Track:
     def __init__(self, track, start='s', finish='f', out='.'):
@@ -40,32 +43,33 @@ class Track:
         self.start = set()
         self.finish = set()
 
-        for track.open() as fp:
-            reader = csv.reader()
-            for line in reader:
+        with track.open() as fp:
+            reader = csv.reader(fp)
+            for (i, line) in enumerate(reader):
                 i = reader.line_num - 1
                 row = []
                 for (j, cell) in enumerate(line):
                     inbounds = cell != out
                     row.append(inbounds)
-                    if inbounds:
-                        c = Vector(i, j)
-                        if cell == start:
-                            self.start.add(c)
-                        elif cell == finish:
-                            self.finish.add(c)
+                    if inbounds and (cell == start or cell == finish):
+                        kind = self.start if cell == start else self.finish
+                        kind.add(Vector(i, j))
                 self.track.append(row)
 
     def __getitem__(self, key):
-        assert(type(key) == Vector)
-        return self.track[key.x][key.y]
+        try:
+            if all([ x >= 0 for x in key ]):
+                return self.track[key.x][key.y]
+        except IndexError:
+            pass
 
-    def navigate(position, velocity):
+        return False
+
+    def navigate(self, position, velocity):
         iterable = it.product(*map(lambda x: range(x + 1), velocity))
         for i in it.starmap(Vector, filter(lambda x: any(x), iterable)):
             pos = position + i
-            inbounds = all([ x >= 0 for x in pos ]) and self.track[pos]
-            yield (pos, inbounds)
+            yield (pos, self[pos])
 
 class Race:
     def __init__(self, state, track, reward=-1, penalty=4):
@@ -75,77 +79,100 @@ class Race:
         self.penalty = penalty
 
     def __iter__(self):
+        assert(self.state.position in self.track.start)
         return self
 
     def __next__(self):
+        if self.state.position in self.track.finish:
+            raise StopIteration()
+
         #
         # Select and take an action
         #
         while True:
-            action = Vector(*[ random.randint(-1, 1) for _ in range(2) ])
+            action = random.choice(list(actions()))
             velocity = (self.state.velocity + action).clip()
             if velocity:
                 break
 
+        #
+        # Calculate the destination based on this action
+        #
         route = list(self.track.navigate(self.state.position, velocity))
         (position, inbounds) = max(route, key=op.itemgetter(0))
 
         if not inbounds:
-            reward = -5
-        elif not all(map(op.itemgetter(1), route)):
-            elegible = [ x for (x, y) in route if y ]
+            filt = lambda x: [ a for (a, b) in x if b ]
+
+            elegible = filt(route)
             if not elegible:
-                for (i, j) in route:
-                    if j and not any(i - self.state.position):
-                        elegible.append(j)
+                step = Vector(1, 1)
+                elegible = filt(self.track.navigate(self.state.position, step))
                 assert(elegible)
             position = max(elegible)
+
+            reward = -5
+        elif not all(map(op.itemgetter(1), route)):
             reward = -5
         else:
             reward = -1
 
+        transition = Transition(self.state, action, reward)
         self.state = State(position, velocity)
 
-        return (self.state, action, reward)
+        return transition
 
-logging.basicConfig(level=logging.INFO,
+def actions():
+    values = it.product(range(-1, 2), repeat=len(Vector._fields))
+    yield from it.starmap(Vector, values)
+
+logging.basicConfig(level=logging.DEBUG,
                     format='[ %(asctime)s ] %(levelname)s: %(message)s',
                     datefmt='%H:%M:%S')
 
 arguments = ArgumentParser()
 arguments.add_argument('--track', type=Path)
+arguments.add_argument('--games', type=int)
 args = arguments.parse_args()
 
-# returns = cl.defaultdict(list)
-# values = cl.defaultdict(float)
-# policy = {}
+track = Track(args.track)
 
-# for i in range(args.games):
-#     st = next(state)
+returns = cl.defaultdict(list)
+values = cl.defaultdict(float)
+policy = {}
 
-#     #
-#     # generate epsiode
-#     #
-#     player = ft.partial(GreedyPlayer, policy=policy)
-#     blackjack = Blackjack(st, player)
-#     (episode, reward) = blackjack.play()
+for i in range(args.games):
+    for pos in track.start:
+        while True:
+            velocity = Vector(*[
+                random.randrange(5) for _ in range(len(Vector._fields))
+            ])
+            if any(velocity):
+                break
+        start = State(pos, velocity)
+        logging.info('{} {}'.format(i, start))
 
-#     #
-#     # calculate returns
-#     #
-#     for (j, e) in enumerate(episode):
-#         returns[e].append(reward)
-#         values[e] = np.mean(returns[e])
+        #
+        # generate epsiode and calculate returns
+        #
+        states = []
+        race = Race(start, track)
+        for transition in race:
+            logging.debug(transition)
 
-#     #
-#     # calculate optimal policies
-#     #
-#     for (s, a) in episode:
-#         vals = [ values[(s, x)] for x in range(2) ]
-#         best = np.argwhere(vals == np.max(vals))
-#         policy[s] = np.random.choice(best.flatten())
+            key = (transition.state, transition.action)
+            returns[key].append(transition.reward)
+            values[key] = np.mean(returns[key])
 
-#         logging.debug('{}: {} a:{} r:{} - pi:{} Q:{}'
-#                       .format(i, s, a, reward, policy[s], vals))
+            states.append(transition.state)
 
-#     logging.info('{0}: {1} -> {2:2d}'.format(i, blackjack, reward))
+        #
+        # calculate optimal policies
+        #
+        for s in states:
+            vals = cl.defaultdict(list)
+            for a in actions():
+                key = values[(s, a)]
+                vals[key].append(a)
+            best = max(vals.keys())
+            policy[s] = random.choice(vals[best])
