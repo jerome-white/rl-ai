@@ -4,10 +4,15 @@ import logging
 import operator as op
 import itertools as it
 import collections as cl
+import multiprocessing as mp
 from pathlib import Path
 from argparse import ArgumentParser
 
 import numpy as np
+
+logging.basicConfig(level=logging.DEBUG,
+                    format='%(asctime)s %(process)d %(levelname)s %(message)s',
+                    datefmt='%H:%M:%S')
 
 State = cl.namedtuple('State', 'position, velocity')
 Transition = cl.namedtuple('Transition', 'state, action, reward')
@@ -127,26 +132,18 @@ def actions():
     values = it.product(range(-1, 2), repeat=len(Vector._fields))
     yield from it.starmap(Vector, values)
 
-logging.basicConfig(level=logging.DEBUG,
-                    format='[ %(asctime)s ] %(levelname)s: %(message)s',
-                    datefmt='%H:%M:%S')
+def func(args):
+    (start, games, track) = args
 
-arguments = ArgumentParser()
-arguments.add_argument('--track', type=Path)
-arguments.add_argument('--games', type=int)
-args = arguments.parse_args()
+    returns = cl.defaultdict(list)
+    values = cl.defaultdict(float)
+    policy = {}
 
-track = Track(args.track)
+    stationary = Vector()
 
-returns = cl.defaultdict(list)
-values = cl.defaultdict(float)
-policy = {}
-
-for i in range(args.games):
-    for pos in track.start:
-        velocity = Vector()
-        start = State(pos, velocity)
-        logging.info('{} {}'.format(i, start))
+    for i in range(games):
+        start = State(start, stationary)
+        logging.info('{0} {1}'.format(start, i))
 
         #
         # generate epsiode and calculate returns
@@ -172,3 +169,17 @@ for i in range(args.games):
                 vals[key].append(a)
             best = max(vals.keys())
             policy[s] = random.choice(vals[best])
+
+    return start
+
+arguments = ArgumentParser()
+arguments.add_argument('--track', type=Path)
+arguments.add_argument('--games', type=int)
+arguments.add_argument('--workers', type=int, default=mp.cpu_count())
+args = arguments.parse_args()
+
+with mp.Pool(args.workers) as pool:
+    track = Track(args.track)
+    iterable = map(lambda x: (x, args.games, track), track.start)
+    for i in pool.imap_unordered(func, iterable):
+        logging.info(i)
