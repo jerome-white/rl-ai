@@ -14,7 +14,7 @@ Transition = cl.namedtuple('Transition', 'state, action, reward')
 _Vector = cl.namedtuple('_Vector', 'x, y')
 
 class Vector(_Vector):
-    def __new__(cls, x, y):
+    def __new__(cls, x=0, y=0):
         return super(Vector, cls).__new__(cls, x, y)
 
     def __add__(self, other):
@@ -144,12 +144,7 @@ policy = {}
 
 for i in range(args.games):
     for pos in track.start:
-        while True:
-            velocity = Vector(*[
-                random.randrange(5) for _ in range(len(Vector._fields))
-            ])
-            if any(velocity):
-                break
+        velocity = Vector()
         start = State(pos, velocity)
         logging.info('{} {}'.format(i, start))
 
