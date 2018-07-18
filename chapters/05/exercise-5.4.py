@@ -104,7 +104,8 @@ class Race:
         #
         # Calculate the destination based on this action
         #
-        route = list(self.track.navigate(self.state.position, velocity))
+        displacement = self.displace(velocity)
+        route = list(self.track.navigate(self.state.position, displacement))
         (position, inbounds) = max(route, key=op.itemgetter(0))
 
         if not inbounds:
@@ -128,6 +129,31 @@ class Race:
 
         return transition
 
+    def displace(self, velocity):
+        raise NotImplementedError()
+
+class FlatRace(Race):
+    def displace(self, velocity):
+        return velocity
+
+class DownhillRace(Race):
+    def __init__(self, track, start='s', finish='f', out='.', gradient=1):
+        super().__init__(track, start, finish, out)
+
+        self.step = 0
+        self.gradient = gradient + 1
+
+    def displace(self, velocity):
+        if self.step % 2:
+            args = []
+            for _ in range(len(Vector._fields)):
+                args.append(random.randrange(self.gradient))
+            velocity += Vector(*args)
+
+        self.step += 1
+
+        return velocity
+
 def actions():
     values = it.product(range(-1, 2), repeat=len(Vector._fields))
     yield from it.starmap(Vector, values)
@@ -147,7 +173,7 @@ def func(args):
         #
         # generate epsiode and calculate returns
         #
-        race = Race(start, track)
+        race = FlatRace(start, track)
         states = []
 
         for transition in race:
