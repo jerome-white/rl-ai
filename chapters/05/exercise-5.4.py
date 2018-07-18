@@ -19,7 +19,7 @@ Transition = cl.namedtuple('Transition', 'state, action, reward')
 _Vector = cl.namedtuple('_Vector', 'x, y')
 
 class Vector(_Vector):
-    def __new__(cls, x=0, y=0):
+    def __new__(cls, x, y):
         return super(Vector, cls).__new__(cls, x, y)
 
     def __add__(self, other):
@@ -139,17 +139,16 @@ def func(args):
     values = cl.defaultdict(float)
     policy = {}
 
-    stationary = Vector()
+    state = State(start, Vector(0, 0))
 
     for i in range(games):
-        start = State(start, stationary)
-        logging.info('{0} {1}'.format(start, i))
+        logging.info('{0} {1}'.format(state, i))
 
         #
         # generate epsiode and calculate returns
         #
-        states = []
-        race = Race(start, track)
+        observed = []
+        race = Race(state, track)
         for transition in race:
             logging.debug(transition)
 
@@ -157,12 +156,12 @@ def func(args):
             returns[key].append(transition.reward)
             values[key] = np.mean(returns[key])
 
-            states.append(transition.state)
+            observed.append(transition.state)
 
         #
         # calculate optimal policies
         #
-        for s in states:
+        for s in observed:
             vals = cl.defaultdict(list)
             for a in actions():
                 key = values[(s, a)]
