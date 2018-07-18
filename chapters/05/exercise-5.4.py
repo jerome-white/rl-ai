@@ -133,22 +133,23 @@ def actions():
     yield from it.starmap(Vector, values)
 
 def func(args):
-    (start, games, track) = args
+    (position, games, track) = args
 
     returns = cl.defaultdict(list)
     values = cl.defaultdict(float)
     policy = {}
 
-    state = State(start, Vector(0, 0))
+    start = State(position, Vector(0, 0))
 
     for i in range(games):
-        logging.info('{0} {1}'.format(state, i))
+        logging.info('{0} {1}'.format(start, i))
 
         #
         # generate epsiode and calculate returns
         #
-        observed = []
-        race = Race(state, track)
+        race = Race(start, track)
+        states = []
+
         for transition in race:
             logging.debug(transition)
 
@@ -156,12 +157,12 @@ def func(args):
             returns[key].append(transition.reward)
             values[key] = np.mean(returns[key])
 
-            observed.append(transition.state)
+            states.append(transition.state)
 
         #
         # calculate optimal policies
         #
-        for s in observed:
+        for s in states:
             vals = cl.defaultdict(list)
             for a in actions():
                 key = values[(s, a)]
@@ -169,7 +170,7 @@ def func(args):
             best = max(vals.keys())
             policy[s] = random.choice(vals[best])
 
-    return start
+    return position
 
 arguments = ArgumentParser()
 arguments.add_argument('--track', type=Path)
