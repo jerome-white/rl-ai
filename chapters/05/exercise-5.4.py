@@ -158,45 +158,45 @@ def actions():
     values = it.product(range(-1, 2), repeat=len(Vector._fields))
     yield from it.starmap(Vector, values)
 
-def func(args):
-    (position, games, track, setting) = args
+def func(queue, games, track, setting):
+    while True:
+        position = queue.get()
+        start = State(position, Vector(0, 0))
 
-    returns = cl.defaultdict(list)
-    values = cl.defaultdict(float)
-    policy = {}
+        returns = cl.defaultdict(list)
+        values = cl.defaultdict(float)
+        policy = {}
 
-    start = State(position, Vector(0, 0))
+        for i in range(games):
+            logging.info('{0} {1}'.format(start, i))
 
-    for i in range(games):
-        logging.info('{0} {1}'.format(start, i))
+            #
+            # generate epsiode and calculate returns
+            #
+            race = setting(start, track)
+            states = []
 
-        #
-        # generate epsiode and calculate returns
-        #
-        race = setting(start, track)
-        states = []
+            for transition in race:
+                logging.debug(transition)
 
-        for transition in race:
-            logging.debug(transition)
+                key = (transition.state, transition.action)
+                returns[key].append(transition.reward)
+                values[key] = np.mean(returns[key])
 
-            key = (transition.state, transition.action)
-            returns[key].append(transition.reward)
-            values[key] = np.mean(returns[key])
+                states.append(transition.state)
 
-            states.append(transition.state)
+            #
+            # calculate optimal policies
+            #
+            for s in states:
+                vals = cl.defaultdict(list)
+                for a in actions():
+                    key = values[(s, a)]
+                    vals[key].append(a)
+                best = max(vals.keys())
+                policy[s] = random.choice(vals[best])
 
-        #
-        # calculate optimal policies
-        #
-        for s in states:
-            vals = cl.defaultdict(list)
-            for a in actions():
-                key = values[(s, a)]
-                vals[key].append(a)
-            best = max(vals.keys())
-            policy[s] = random.choice(vals[best])
-
-    return position
+        queue.task_done()
 
 arguments = ArgumentParser()
 arguments.add_argument('--track', type=Path)
@@ -205,9 +205,11 @@ arguments.add_argument('--downhill', action='store_true')
 arguments.add_argument('--workers', type=int, default=mp.cpu_count())
 args = arguments.parse_args()
 
-with mp.Pool(args.workers) as pool:
-    setting = DownhillRace if args.downhill else FlatRace
-    track = Track(args.track)
-    iterable = map(lambda x: (x, args.games, track, setting), track.start)
-    for i in pool.imap_unordered(func, iterable):
-        logging.info(i)
+queue = mp.JoinableQueue()
+track = Track(args.track)
+setting = DownhillRace if args.downhill else FlatRace
+
+with mp.Pool(args.workers, func, (queue, args.games, track, setting)):
+    for i in track.start:
+        queue.put(i)
+    queue.join()
