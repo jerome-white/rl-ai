@@ -106,23 +106,25 @@ class Race:
         #
         displacement = self.displace(velocity)
         route = list(self.track.navigate(self.state.position, displacement))
-        (position, inbounds) = max(route, key=op.itemgetter(0))
+        (position, inbounds) = max(route, key=op.itemgetter(0)) # final dest.
 
-        if not inbounds:
-            filt = lambda x: [ a for (a, b) in x if b ]
+        reward = self.reward
 
-            elegible = filt(route)
-            if not elegible:
-                step = Vector(1, 1)
-                elegible = filt(self.track.navigate(self.state.position, step))
-                assert(elegible)
-            position = max(elegible)
+        # If any of the sectors along the route are out of bounds, the
+        # car drove off the road to get to this destination.
+        if not all(map(op.itemgetter(1), route)):
+            reward -= self.penalty
 
-            reward = -5
-        elif not all(map(op.itemgetter(1), route)):
-            reward = -5
-        else:
-            reward = -1
+            # If the final destination is out of bounds, choose a new
+            # position that's one-closer to the finish.
+            if not inbounds:
+                filt = lambda x: [ a for (a, b) in x if b ]
+                good = filt(route)
+                if not good:
+                    step = Vector(1, 1)
+                    good = filt(self.track.navigate(self.state.position, step))
+                    assert(good)
+                position = max(good)
 
         transition = Transition(self.state, action, reward)
         self.state = State(position, velocity)
