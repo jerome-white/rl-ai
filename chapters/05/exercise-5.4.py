@@ -159,7 +159,7 @@ def actions():
     yield from it.starmap(Vector, values)
 
 def func(args):
-    (position, games, track) = args
+    (position, games, track, setting) = args
 
     returns = cl.defaultdict(list)
     values = cl.defaultdict(float)
@@ -173,7 +173,7 @@ def func(args):
         #
         # generate epsiode and calculate returns
         #
-        race = FlatRace(start, track)
+        race = setting(start, track)
         states = []
 
         for transition in race:
@@ -201,11 +201,13 @@ def func(args):
 arguments = ArgumentParser()
 arguments.add_argument('--track', type=Path)
 arguments.add_argument('--games', type=int)
+arguments.add_argument('--downhill', action='store_true')
 arguments.add_argument('--workers', type=int, default=mp.cpu_count())
 args = arguments.parse_args()
 
 with mp.Pool(args.workers) as pool:
+    setting = DownhillRace if args.downhill else FlatRace
     track = Track(args.track)
-    iterable = map(lambda x: (x, args.games, track), track.start)
+    iterable = map(lambda x: (x, args.games, track, setting), track.start)
     for i in pool.imap_unordered(func, iterable):
         logging.info(i)
