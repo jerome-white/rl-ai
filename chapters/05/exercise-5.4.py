@@ -40,8 +40,8 @@ class Vector(_Vector):
     def advance(self, other):
         return type(self)(self.x - other.x, self.y + other.y)
 
-    def clip(self):
-        return type(self)(*map(lambda x: np.clip(x, 0, 4), self))
+    def clip(self, at=4):
+        return type(self)(*map(lambda x: np.clip(x, 0, at), self))
 
 class Track:
     def __init__(self, track, start='s', finish='f', out='.'):
