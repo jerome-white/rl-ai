@@ -13,6 +13,7 @@ from argparse import ArgumentParser
 # import seaborn as sns
 # import matplotlib.pyplot as plt
 
+import blackjack as bj
 from blackjack import State, Player, Blackjack
 
 logging.basicConfig(level=logging.INFO,
@@ -51,7 +52,7 @@ def func(args):
             (s, a) = e
             # player = Player(s.player, 2, s.ace)
             # action = player.hit(s.dealer)
-            action = fairmax(Q, s)
+            action = bj.fairmax(Q, s)
 
             if a != action:
                 break
