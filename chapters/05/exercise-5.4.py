@@ -51,9 +51,9 @@ class Track:
 
         with track.open() as fp:
             reader = csv.reader(fp)
-            for (i, line) in enumerate(reader):
-                i = reader.line_num - 1
+            for line in reader:
                 row = []
+                i = reader.line_num - 1
                 for (j, cell) in enumerate(line):
                     inbounds = cell != out
                     row.append(inbounds)
