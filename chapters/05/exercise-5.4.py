@@ -137,8 +137,8 @@ class FlatRace(Race):
         return velocity
 
 class DownhillRace(Race):
-    def __init__(self, track, start='s', finish='f', out='.', gradient=1):
-        super().__init__(track, start, finish, out)
+    def __init__(self, state, track, reward=-1, penalty=4, gradient=1):
+        super().__init__(state, track, reward, penalty)
 
         self.step = 0
         self.gradient = gradient + 1
