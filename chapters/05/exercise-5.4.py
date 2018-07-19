@@ -147,9 +147,9 @@ class DownhillRace(Race):
         if self.step % 2:
             args = []
             for _ in range(len(Vector._fields)):
-                args.append(random.randrange(self.gradient))
+                gradient = random.randrange(self.gradient)
+                args.append(gradient)
             velocity += Vector(*args)
-
         self.step += 1
 
         return velocity
