@@ -1,13 +1,9 @@
 import sys
 import csv
-import math
 import logging
 import itertools as it
 import collections as cl
 from argparse import ArgumentParser
-
-import numpy as np
-import sklearn.metrics as skm
 
 import walk
 
@@ -24,23 +20,14 @@ arguments.add_argument('--initial', type=float, default=0.5)
 args = arguments.parse_args()
 
 states = [ chr(65 + x) for x in range(args.states) ]
-
 V = cl.defaultdict(lambda: args.initial)
-actual = [ x / (len(states) + 1) for x in range(1, len(states) + 1) ]
 
-fieldnames = [
-    *states,
-    'rmse',
-]
 writer = csv.DictWriter(sys.stdout,
-                        fieldnames=fieldnames,
+                        fieldnames=states,
                         restval=args.initial,
                         extrasaction='ignore')
 writer.writeheader()
-
-predicted = [ V[x] for x in states ]
-rmse = math.sqrt(skm.mean_squared_error(actual, predicted))
-writer.writerow({ **V, 'rmse': rmse })
+writer.writerow(V)
 
 for i in range(args.episodes):
     s = None
@@ -51,7 +38,4 @@ for i in range(args.episodes):
             V[s.state] += args.alpha * value
         s = s_
     logging.info(dict(V))
-
-    predicted = [ V[x] for x in states ]
-    rmse = math.sqrt(skm.mean_squared_error(actual, predicted))
-    writer.writerow({ **V, 'rmse': rmse })
+    writer.writerow(V)
