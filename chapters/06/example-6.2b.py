@@ -20,9 +20,12 @@ arguments.add_argument('--alpha', type=float, default=1)
 arguments.add_argument('--gamma', type=float, default=1)
 args = arguments.parse_args()
 
-V = {}
-returns = cl.defaultdict(list)
-states = [ chr(ord('A') + x) for x in range(args.states) ]
+states = []
+V = cl.defaultdict(float)
+for i in range(args.states):
+    s = chr(ord('A') + i)
+    states.append(s)
+    V[s] = 0.5
 
 writer = csv.DictWriter(sys.stdout,
                         fieldnames=states,
@@ -30,18 +33,12 @@ writer = csv.DictWriter(sys.stdout,
 writer.writeheader()
 
 for i in range(args.episodes):
-    reward = None
     episode = list(walk.walk(states))
+    episode.pop()
 
-    for (j, ep) in enumerate(reversed(episode)):
-        if j > 0:
-            logging.debug(ep)
-        
-            if reward is None:
-                reward = ep.reward
-
-            r = returns[ep.state]
-            r.append(reward)
-            V[ep.state] = np.mean(r)
+    reward = episode[-1].reward
+    for ep in reversed(episode):
+        logging.debug(ep)
+        V[ep.state] += args.alpha * (reward - V[ep.state])
 
     writer.writerow(V)
