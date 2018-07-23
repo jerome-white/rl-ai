@@ -16,15 +16,17 @@ arguments.add_argument('--states', type=int, default=5)
 arguments.add_argument('--episodes', type=int, default=1)
 arguments.add_argument('--alpha', type=float, default=1)
 arguments.add_argument('--gamma', type=float, default=1)
-arguments.add_argument('--initial', type=float, default=0.5)
 args = arguments.parse_args()
 
-states = [ chr(65 + x) for x in range(args.states) ]
-V = cl.defaultdict(lambda: args.initial)
+states = []
+V = cl.defaultdict(int)
+for i in range(args.states):
+    s = chr(65 + i)
+    states.append(s)
+    V[s] = 0.5
 
 writer = csv.DictWriter(sys.stdout,
                         fieldnames=states,
-                        restval=args.initial,
                         extrasaction='ignore')
 writer.writeheader()
 writer.writerow(V)
