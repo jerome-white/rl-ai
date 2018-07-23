@@ -21,7 +21,7 @@ args = arguments.parse_args()
 states = []
 V = cl.defaultdict(float)
 for i in range(args.states):
-    s = chr(65 + i)
+    s = chr(ord('A') + i)
     states.append(s)
     V[s] = 0.5
 
