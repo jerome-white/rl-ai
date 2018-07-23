@@ -19,7 +19,7 @@ arguments.add_argument('--gamma', type=float, default=1)
 args = arguments.parse_args()
 
 states = []
-V = cl.defaultdict(int)
+V = cl.defaultdict(float)
 for i in range(args.states):
     s = chr(65 + i)
     states.append(s)
