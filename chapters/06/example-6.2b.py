@@ -39,6 +39,6 @@ for i in range(args.episodes):
     reward = episode[-1].reward
     for ep in reversed(episode):
         logging.debug(ep)
-        V[ep.state] += args.alpha * (reward - V[ep.state])
+        V[ep.state] += args.alpha * (args.gamma * reward - V[ep.state])
 
     writer.writerow(V)
