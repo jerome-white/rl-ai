@@ -26,7 +26,7 @@ def walk(states, pos=None, terminal=np.inf):
     yield Transition(np.sign(pos) * terminal, 0, np.nan)
 
 class Model:
-    def __init__(self, states, episodes, alpha, gamma):
+    def __init__(self, states, episodes, alpha, gamma=1):
         self.episodes = episodes
         self.alpha = alpha
         self.gamma = gamma
