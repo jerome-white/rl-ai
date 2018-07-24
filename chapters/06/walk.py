@@ -58,11 +58,14 @@ class Model:
         raise NotImplementedError()
 
 class TemporalDifference(Model):
+    #
+    # Tabular TD(0) (Figure 6.1)
+    #
     def update(self):
         s = None
-
         for s_ in walk(self.states):
             if s is not None:
+                # Equation 6.2
                 v = s.reward + self.gamma * self.V[s_.state] - self.V[s.state]
                 self.V[s.state] += self.alpha * v
             s = s_
@@ -75,5 +78,6 @@ class MonteCarlo(Model):
         reward = episode[-1].reward
 
         for s in reversed(episode):
+            # Equation 6.1
             v = self.gamma * reward - self.V[s.state]
             self.V[s.state] += self.alpha * v
