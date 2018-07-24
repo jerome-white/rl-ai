@@ -11,7 +11,7 @@ import sklearn.metrics as skm
 
 from walk import TemporalDifference, MonteCarlo
 
-logging.basicConfig(level=logging.DEBUG,
+logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(levelname)s %(message)s',
                     datefmt='%H:%M:%S')
 
