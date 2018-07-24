@@ -5,7 +5,7 @@ import itertools as it
 import collections as cl
 from argparse import ArgumentParser
 
-import walk
+from walk import TemporalDifference
 
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s %(levelname)s %(message)s',
@@ -18,26 +18,10 @@ arguments.add_argument('--alpha', type=float, default=1)
 arguments.add_argument('--gamma', type=float, default=1)
 args = arguments.parse_args()
 
-states = []
-V = cl.defaultdict(float)
-for i in range(args.states):
-    s = chr(ord('A') + i)
-    states.append(s)
-    V[s] = 0.5
+model = TemporalDifference(args.states, args.episodes, args.alpha, args.gamma)
 
 writer = csv.DictWriter(sys.stdout,
-                        fieldnames=states,
+                        fieldnames=model.states,
                         extrasaction='ignore')
 writer.writeheader()
-writer.writerow(V)
-
-for i in range(args.episodes):
-    s = None
-    for s_ in walk.walk(states):
-        if s is not None:
-            value = s.reward + args.gamma * V[s_.state] - V[s.state]
-            logging.debug('{} {} {}'.format(s, s_, value))
-            V[s.state] += args.alpha * value
-        s = s_
-    logging.info(dict(V))
-    writer.writerow(V)
+writer.writerows(model)
