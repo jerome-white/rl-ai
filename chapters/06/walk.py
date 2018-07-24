@@ -52,7 +52,7 @@ class Model:
             self.step()
         self.i += 1
 
-        return self.V
+        return { x: self.V[x] for x in self.states }
 
     def step(self):
         raise NotImplementedError()
