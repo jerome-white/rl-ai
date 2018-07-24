@@ -31,7 +31,7 @@ class Model:
         self.alpha = alpha
         self.gamma = gamma
 
-        self.i = 0
+        self.step = 0
         self.states = []
         self.V = cl.defaultdict(float)
 
@@ -46,19 +46,19 @@ class Model:
         return self
 
     def __next__(self):
-        if self.i:
-            if self.i > self.episodes:
+        if self.step:
+            if self.step > self.episodes:
                 raise StopIteration()
-            self.step()
-        self.i += 1
+            self.update()
+        self.step += 1
 
         return { x: self.V[x] for x in self.states }
 
-    def step(self):
+    def update(self):
         raise NotImplementedError()
 
 class TemporalDifference(Model):
-    def step(self):
+    def update(self):
         s = None
 
         for s_ in walk(self.states):
@@ -68,7 +68,7 @@ class TemporalDifference(Model):
             s = s_
 
 class MonteCarlo(Model):
-    def step(self):
+    def update(self):
         episode = list(walk(self.states))
         episode.pop()
 
