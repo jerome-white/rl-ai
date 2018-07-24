@@ -53,7 +53,7 @@ class Animator:
 
 arguments = ArgumentParser()
 arguments.add_argument('--states', type=int, default=5)
-arguments.add_argument('--episodes', type=int, default=1000)
+arguments.add_argument('--episodes', type=int, default=100)
 arguments.add_argument('--alpha', type=float, default=0.1)
 args = arguments.parse_args()
 
