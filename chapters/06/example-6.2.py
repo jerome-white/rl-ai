@@ -1,3 +1,4 @@
+import math
 import logging
 from argparse import ArgumentParser
 
@@ -19,7 +20,10 @@ class Animator:
         self.keyframes = {
             'True values': [ x / limit for x in range(1, limit) ]
         }
-        self.samples = [0] + np.logspace(0, 3, 4, dtype=int).tolist()
+
+        limit = round(math.log(self.model.episodes))
+        self.samples = set([ 10 ** x for x in range(limit) ])
+        self.samples.add(0)
 
     def __iter__(self):
         yield from enumerate(self.model)
