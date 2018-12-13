@@ -6,7 +6,7 @@ from argparse import ArgumentParser
 
 import numpy as np
 
-from gridworld import State, Grid, EpsilonGreedyPolicy
+from gridworld import State, WindyGrid, EpsilonGreedyPolicy
 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(levelname)s %(message)s',
@@ -30,8 +30,8 @@ writer.writeheader()
 for episode in range(args.episodes):
     logging.info(episode)
 
-    grid = Grid(Q.shape, goal)
-    policy = EpsilonGreedyPolicy(grid.shape, args.epsilon)
+    grid = WindyGrid(Q.shape, goal)
+    policy = EpsilonGreedyPolicy(grid, args.epsilon)
 
     steps = 0
     state = start
