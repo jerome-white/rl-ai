@@ -22,19 +22,17 @@ class State(State_):
     def inbounds(self, bounds):
         return all([ 0 <= x < y for (x, y) in zip(self, bounds) ])
 
-    def neighbors(self, bounds):
-        for i in it.permutations(range(-1, 2), r=2):
-            if op.xor(*map(abs, i)):
-                s = self + type(self)(*i)
-                if s.inbounds(bounds):
-                    yield s
-
 class Policy:
     def __init__(self, bounds):
         self.bounds = bounds
 
     def neighbors(self, state):
-        yield from state.neighbors(self.bounds)
+        for i in it.permutations(range(-1, 2), r=2):
+            action = State(*i)
+            if op.xor(*map(abs, action)):
+                s = state + action
+                if s.inbounds(self.bounds):
+                    yield action
 
     def choose(self, state, Q):
         raise NotImplementedError()
