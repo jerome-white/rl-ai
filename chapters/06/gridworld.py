@@ -3,6 +3,8 @@ import operator as op
 import itertools as it
 import collections as cl
 
+import numpy as np
+
 Action = cl.namedtuple('Action', 'state, reward')
 State_ = cl.namedtuple('State_', 'row, column')
 
@@ -37,9 +39,24 @@ class Policy:
     def choose(self, state, Q):
         raise NotImplementedError()
 
-class RandomPolicy(Policy):
+class EpsilonGreedyPolicy(Policy):
+    def __init__(self, bounds, epsilon):
+        super().__init__(bounds)
+        self.epsilon = epsilon
+
     def choose(self, state, Q):
-        return random.choice(list(self.neighbors(state)))
+        if np.random.binomial(1, self.epsilon):
+            actions = list(self.neighbors(state))
+        else:
+            best = None
+            actions = []
+
+            for i in self.neighbors(state):
+                s = state + i
+                if best is None or Q[s] >= best:
+                    actions.append(i)
+
+        return random.choice(actions)
 
 class Grid:
     def __init__(self, shape, goal):
