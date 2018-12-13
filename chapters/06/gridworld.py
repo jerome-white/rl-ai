@@ -33,35 +33,28 @@ class Policy:
         self.bounds = bounds
 
     def potential(self, state):
-        yield from state.neighbors(self.bounds):
+        yield from state.neighbors(self.bounds)
 
     def choose(self, state, Q):
         raise NotImplementedError()
 
 class RandomPolicy(Policy):
     def choose(self, state, Q):
-        return random.choice(self.potential(state))
+        return random.choice(list(self.potential(state)))
 
 class Grid:
-    def __init__(self, start, goal, shape):
-        self.state = start
+    def __init__(self, shape, goal):
+        self.shape = State(*shape)
         self.goal = goal
-        self.shape = shape
 
-    def __bool__(self):
-        return self.state != self.goal
+    def walk(self, state, action):
+        state_ = self.blow(state + action)
+        if not state_.inbounds(self.shape):
+            state_ = state
 
-    def __int__(self):
-        return -int(self)
+        reward = -int(state != self.goal)
 
-    def walk(self, action):
-        previous = self.state
-
-        self.state = self.blow(self.state + action)
-        if not self.state.inbounds(self.shape):
-            self.state = previous
-
-        return (self.state, int(self))
+        return (state_, reward)
 
     def blow(self, state):
         raise NotImplementedError()

@@ -1,10 +1,16 @@
+import sys
+import csv
 import logging
 import collections as cl
 from argparse import ArgumentParser
 
 import numpy as np
 
-from gridworld import GridWorld
+from gridworld import State, Grid, RandomPolicy
+
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s %(levelname)s %(message)s',
+                    datefmt='%H:%M:%S')
 
 arguments = ArgumentParser()
 arguments.add_argument('--alpha', type=float, default=0.1)
@@ -14,19 +20,30 @@ arguments.add_argument('--episodes', type=int, default=8000)
 args = arguments.parse_args()
 
 Q = np.zeros((7, 10))
-start = (3, 0)
-goal = (3, 8)
+start = State(3, 0)
+goal = State(3, 8)
 
-for i in range(args.episodes):
-    grid = GridWorld(*map(State, (start, goal, Q.shape)))
+fieldnames = [ 'episodes', 'steps' ]
+writer = csv.DictWriter(sys.stdout, fieldnames=fieldnames)
+writer.writeheader()
+
+for episode in range(args.episodes):
+    logging.info(episode)
+
+    grid = Grid(Q.shape, goal)
+    policy = RandomPolicy(grid.shape)
 
     steps = 0
-    state = grid.state
-    action = policy.select(state, Q)
-    while grid:
-        (state_, reward) = grid.walk(action)
+    state = start
+    action = policy.choose(state, Q)
+
+    while state != goal:
+        (state_, reward) = grid.walk(state, action)
         action = policy.select(state_, Q)
 
         Q[state] += self.alpha * (r + self.gamma * Q[state_] - Q[state])
 
+        state = state_
         steps += 1
+
+    writer.writerow(dict(zip(fieldnames, (episode, steps))))
