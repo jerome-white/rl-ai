@@ -41,7 +41,7 @@ for episode in range(args.episodes):
         (state_, reward) = grid.walk(state, action)
         action = policy.choose(state_, Q)
 
-        Q[state] += self.alpha * (r + self.gamma * Q[state_] - Q[state])
+        Q[state] += args.alpha * (reward + args.gamma * Q[state_] - Q[state])
 
         state = state_
         steps += 1
