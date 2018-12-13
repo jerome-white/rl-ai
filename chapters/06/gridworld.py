@@ -58,7 +58,7 @@ class Grid:
         return (state_, reward)
 
     def blow(self, state):
-        raise NotImplementedError()
+        return state
 
 class WindyGrid(Grid):
     def __init__(self, start, goal, shape):
