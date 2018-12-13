@@ -14,16 +14,19 @@ arguments.add_argument('--episodes', type=int, default=8000)
 args = arguments.parse_args()
 
 Q = np.zeros((7, 10))
+start = (3, 0)
+goal = (3, 8)
 
 for i in range(args.episodes):
-    grid = GridWorld(*Q.shape)
+    grid = GridWorld(*map(State, (start, goal, Q.shape)))
 
     steps = 0
-    s = grid.start
-    a = policy.select(s, Q)
-    while s != grid.goal:
-        (s_, r) = grid.walk(s, a)
-        a_ = policy.select(s_, Q)
-        Q[(s, a)] += self.alpha * (r + self.gamma * Q[(s_, a_)] - Q[(s, a)])
-        (s, a) = (s_, a_)
+    state = grid.state
+    action = policy.select(state, Q)
+    while grid:
+        (state_, reward) = grid.walk(action)
+        action = policy.select(state_, Q)
+
+        Q[state] += self.alpha * (r + self.gamma * Q[state_] - Q[state])
+
         steps += 1

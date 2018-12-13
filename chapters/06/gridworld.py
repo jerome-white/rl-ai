@@ -1,3 +1,4 @@
+import random
 import itertools as it
 import collections as cl
 
@@ -17,55 +18,59 @@ class State(State_):
     def __add__(self, other):
         return type(self)(it.starmap(op.add, zip(self, other)))
 
-    def inbounds(self, xbound, ybound):
-        return 0 <= self.row < xbound and 0 <= self.column < ybound
+    def inbounds(self, bounds):
+        return all([ 0 <= x < y for (x, y) in zip(s, bounds) ])
 
-    def neighbors(self):
-        for i in it.permutations(range(-1, 2), 2):
+    def neighbors(self, bounds):
+        for i in it.permutations(range(-1, 2), r=2):
             if not any(i):
-                yield self + type(self)(*i)
+                s = self + type(self)(*i)
+                if self.inbounds(bounds):
+                    yield s
+
+class Policy:
+    def __init__(self, bounds):
+        self.bounds = bounds
+
+    def potential(self, state):
+        yield from state.neighbors(self.bounds):
+
+    def choose(self, state, Q):
+        raise NotImplementedError()
+
+class RandomPolicy(Policy):
+    def choose(self, state, Q):
+        return random.choice(self.potential(state))
 
 class Grid:
-    def __init__(self, rows, columns, policy):
-        self.grid = cl.defaultdict(set)
-
-        self.start = start
+    def __init__(self, start, goal, shape):
+        self.state = start
         self.goal = goal
-        self.policy = policy
+        self.shape = shape
 
-        for i in it.product(range(rows), range(columns), repeat=2):
-            state = State(*i)
-            for t in state.neighbors():
-                s = t if t.inbounds(rows, columns) else state
-                r = 0 if t == goal else -1
-                self.grid[state].add(Action(s, r))
+    def __bool__(self):
+        return self.state != self.goal
 
-        self.dimensions = (rows, columns)
-        self.state = None
+    def __int__(self):
+        return -int(self)
 
-    def __iter__(self):
-        self.state = self.start
-        return self
+    def walk(self, action):
+        previous = self.state
 
-    def __next__(self):
-        if self.state == self.goal:
-            raise StopIteration()
+        self.state = self.blow(self.state + action)
+        if not self.state.inbounds(self.shape):
+            self.state = previous
 
-        action = self.policy.select(self.state)
-        self.state = action.state
+        return (self.state, int(self))
 
-        return action
-
-    def walk(self, state, action):
-        return self.state[state][action]
+    def blow(self, state):
+        raise NotImplementedError()
 
 class WindyGrid(Grid):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, start, goal, shape):
+        super().__init__(start, goal, shape)
         self.speeds = [0, 0, 0, 1, 1, 1, 2, 2, 1, 0]
 
-    def __getitem__(self, item):
-        return item + State(0, self._move(item.column))
-
-    def _move(self, col):
-        return self.speeds[col]
+    def blow(self, state):
+        shift = State(0, self.speeds[state.column])
+        return state + shift
