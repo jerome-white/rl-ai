@@ -6,7 +6,7 @@ from argparse import ArgumentParser
 
 import numpy as np
 
-from gridworld import State, Grid, RandomPolicy
+from gridworld import State, Grid, EpsilonGreedyPolicy
 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(levelname)s %(message)s',
@@ -31,13 +31,15 @@ for episode in range(args.episodes):
     logging.info(episode)
 
     grid = Grid(Q.shape, goal)
-    policy = RandomPolicy(grid.shape)
+    policy = EpsilonGreedyPolicy(grid.shape, args.epsilon)
 
     steps = 0
     state = start
     action = policy.choose(state, Q)
 
     while state != goal:
+        logging.debug('s: {0}, a: {1}'.format(state, action))
+
         (state_, reward) = grid.walk(state, action)
         action = policy.choose(state_, Q)
 
