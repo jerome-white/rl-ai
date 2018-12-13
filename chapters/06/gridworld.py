@@ -5,7 +5,6 @@ import collections as cl
 
 import numpy as np
 
-Action = cl.namedtuple('Action', 'state, reward')
 State_ = cl.namedtuple('State_', 'row, column')
 
 class State(State_):
