@@ -57,13 +57,17 @@ class Grid:
         self.goal = goal
 
     def walk(self, state, action):
-        state_ = self.blow(state + action)
-        if not state_.inbounds(self.shape):
-            state_ = state
+        state_ = state + action
+        if state_.inbounds(self.shape):
+            state = state_
+
+        state_ = state + self.blow(state)
+        if state_.inbounds(self.shape):
+            state = state_
 
         reward = -int(state != self.goal)
 
-        return (state_, reward)
+        return (state, reward)
 
     def actions(self, state):
         navigation = it.permutations(range(-1, 2), r=2)
@@ -86,9 +90,7 @@ class WindyGrid(Grid):
         self.speeds = [0, 0, 0, 1, 1, 1, 2, 2, 1, 0]
 
     def blow(self, state):
-        # shift = State(0, self.speeds[state.column])
-        # return state + shift
-        return state
+        return State(-self.speeds[state.column], 0)
 
     def legal(self, action):
         return op.xor(*map(abs, action))
