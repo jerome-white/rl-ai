@@ -24,38 +24,32 @@ class State(State_):
         return all([ 0 <= x < y for (x, y) in zip(self, bounds) ])
 
 class Policy:
-    def __init__(self, bounds):
-        self.bounds = bounds
-
-    def neighbors(self, state):
-        for i in it.permutations(range(-1, 2), r=2):
-            action = State(*i)
-            if op.xor(*map(abs, action)):
-                s = state + action
-                if s.inbounds(self.bounds):
-                    yield action
+    def __init__(self, grid):
+        self.grid = grid
 
     def choose(self, state, Q):
         raise NotImplementedError()
 
 class EpsilonGreedyPolicy(Policy):
-    def __init__(self, bounds, epsilon):
-        super().__init__(bounds)
+    def __init__(self, grid, epsilon):
+        super().__init__(grid)
         self.epsilon = epsilon
 
     def choose(self, state, Q):
+        actions = self.grid.actions(state)
+
         if np.random.binomial(1, self.epsilon):
-            actions = list(self.neighbors(state))
+            elegible = list(actions)
         else:
             best = None
-            actions = []
+            elegible = []
 
-            for i in self.neighbors(state):
-                s = state + i
-                if best is None or Q[s] >= best:
-                    actions.append(i)
+            for action in actions:
+                state_ = state + action
+                if best is None or Q[state_] >= best:
+                    elegible.append(action)
 
-        return random.choice(actions)
+        return random.choice(elegible)
 
 class Grid:
     def __init__(self, shape, goal):
@@ -71,8 +65,20 @@ class Grid:
 
         return (state_, reward)
 
+    def actions(self, state):
+        navigation = it.permutations(range(-1, 2), r=2)
+
+        for action in it.starmap(State, navigation):
+            if self.legal(action):
+                state_ = state + action
+                if state_.inbounds(self.shape):
+                    yield action
+
     def blow(self, state):
-        return state
+        raise NotImplementedError()
+
+    def legal(self, action):
+        raise NotImplementedError()
 
 class WindyGrid(Grid):
     def __init__(self, shape, goal):
@@ -80,5 +86,9 @@ class WindyGrid(Grid):
         self.speeds = [0, 0, 0, 1, 1, 1, 2, 2, 1, 0]
 
     def blow(self, state):
-        shift = State(0, self.speeds[state.column])
-        return state + shift
+        # shift = State(0, self.speeds[state.column])
+        # return state + shift
+        return state
+
+    def legal(self, action):
+        return op.xor(*map(abs, action))
