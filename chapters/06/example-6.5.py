@@ -38,12 +38,12 @@ for episode in range(args.episodes):
     action = policy.choose(state, Q)
 
     while state != goal:
-        logging.debug('s: {0}, a: {1}'.format(state, action))
-
         (state_, reward) = grid.walk(state, action)
         action = policy.choose(state_, Q)
 
         Q[state] += args.alpha * (reward + args.gamma * Q[state_] - Q[state])
+        logging.debug("s: {}, a: {}, r: {}, s': {}, Q: {}"
+                      .format(state, action, reward, state_, Q[state]))
 
         state = state_
         steps += 1
