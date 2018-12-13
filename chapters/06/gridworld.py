@@ -75,8 +75,8 @@ class Grid:
         return state
 
 class WindyGrid(Grid):
-    def __init__(self, start, goal, shape):
-        super().__init__(start, goal, shape)
+    def __init__(self, shape, goal):
+        super().__init__(shape, goal)
         self.speeds = [0, 0, 0, 1, 1, 1, 2, 2, 1, 0]
 
     def blow(self, state):
