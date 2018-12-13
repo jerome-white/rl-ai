@@ -1,4 +1,5 @@
 import random
+import operator as op
 import itertools as it
 import collections as cl
 
@@ -16,23 +17,23 @@ class State(State_):
         return str(self)
 
     def __add__(self, other):
-        return type(self)(it.starmap(op.add, zip(self, other)))
+        return type(self)(*it.starmap(op.add, zip(self, other)))
 
     def inbounds(self, bounds):
-        return all([ 0 <= x < y for (x, y) in zip(s, bounds) ])
+        return all([ 0 <= x < y for (x, y) in zip(self, bounds) ])
 
     def neighbors(self, bounds):
         for i in it.permutations(range(-1, 2), r=2):
-            if not any(i):
+            if op.xor(*map(abs, i)):
                 s = self + type(self)(*i)
-                if self.inbounds(bounds):
+                if s.inbounds(bounds):
                     yield s
 
 class Policy:
     def __init__(self, bounds):
         self.bounds = bounds
 
-    def potential(self, state):
+    def neighbors(self, state):
         yield from state.neighbors(self.bounds)
 
     def choose(self, state, Q):
@@ -40,7 +41,7 @@ class Policy:
 
 class RandomPolicy(Policy):
     def choose(self, state, Q):
-        return random.choice(list(self.potential(state)))
+        return random.choice(list(self.neighbors(state)))
 
 class Grid:
     def __init__(self, shape, goal):
