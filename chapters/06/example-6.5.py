@@ -17,9 +17,10 @@ arguments.add_argument('--alpha', type=float, default=0.1)
 arguments.add_argument('--gamma', type=float, default=1)
 arguments.add_argument('--epsilon', type=float, default=0.1)
 arguments.add_argument('--episodes', type=int, default=8000)
+arguments.add_argument('--rows', type=int, default=7)
+arguments.add_argument('--columns', type=int, default=10)
 args = arguments.parse_args()
 
-Q = np.zeros((7, 10))
 start = State(3, 0)
 goal = State(3, 8)
 
@@ -30,22 +31,25 @@ writer.writeheader()
 for episode in range(args.episodes):
     logging.info(episode)
 
-    grid = WindyGrid(Q.shape, goal)
-    policy = EpsilonGreedyPolicy(grid, args.epsilon)
+    grid = WindyGrid(args.rows, args.columns, goal)
+    Q = EpsilonGreedyPolicy(grid, args.epsilon)
 
     steps = 0
     state = start
-    action = policy.choose(state, Q)
+    action = Q.select(state)
 
     while state != goal:
-        (state_, reward) = grid.walk(state, action)
-        action = policy.choose(state_, Q)
+        (state_, reward) = grid.navigate(state, action)
+        action_ = Q.select(state_)
 
-        Q[state] += args.alpha * (reward + args.gamma * Q[state_] - Q[state])
-        logging.debug("s: {}, a: {}, r: {}, s': {}, Q: {}"
-                      .format(state, action, reward, state_, Q[state]))
+        now = (state, action)
+        later = (state_, action_)
 
-        state = state_
+        Q[now] += args.alpha * (reward + args.gamma * Q[later] - Q[now])
+        # logging.debug("s: {}, a: {}, r: {}, s': {}, Q: {}"
+        #               .format(state, action, reward, state_, Q[state]))
+
+        (state, action) = (state_, action_)
         steps += 1
 
     writer.writerow(dict(zip(fieldnames, (episode, steps))))

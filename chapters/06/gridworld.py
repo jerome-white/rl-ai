@@ -23,40 +23,57 @@ class State(State_):
     def inbounds(self, bounds):
         return all([ 0 <= x < y for (x, y) in zip(self, bounds) ])
 
-class Policy:
+class Q:
     def __init__(self, grid):
-        self.grid = grid
+        self.q = {}
 
-    def choose(self, state, Q):
+        for i in it.product(grid.walk(), grid.actions()):
+            self[i] = 0
+
+    def __getitem__(self, item):
+        (state, action) = item
+        return self.q[state][action]
+
+    def __setitem__(self, key, value):
+        (state, action) = key
+        if state not in self.q:
+            self.q[state] = {}
+        self.q[state][action] = value
+
+    def select(self, state):
         raise NotImplementedError()
 
-class EpsilonGreedyPolicy(Policy):
+class EpsilonGreedyPolicy(Q):
     def __init__(self, grid, epsilon):
         super().__init__(grid)
         self.epsilon = epsilon
 
-    def choose(self, state, Q):
-        actions = self.grid.actions(state)
-
+    def select(self, state):
         if np.random.binomial(1, self.epsilon):
-            elegible = list(actions)
+            actions = list(self.q[state].keys())
         else:
-            best = None
-            elegible = []
+            high_water_mark = -np.inf
+            actions = []
 
-            for action in actions:
-                state_ = state + action
-                if best is None or Q[state_] >= best:
-                    elegible.append(action)
+            for (action, reward) in self.q[state].items():
+                if reward >= high_water_mark:
+                    if reward > high_water_mark:
+                        actions.clear()
+                        high_water_mark = reward
+                    actions.append(action)
 
-        return random.choice(elegible)
+        return random.choice(actions)
 
 class Grid:
-    def __init__(self, shape, goal):
-        self.shape = State(*shape)
+    def __init__(self, rows, columns, goal):
+        self.shape = State(rows, columns)
         self.goal = goal
 
-    def walk(self, state, action):
+    def walk(self):
+        for i in it.product(*map(range, self.shape)):
+            yield State(*i)
+
+    def navigate(self, state, action):
         state_ = state + action
         if state_.inbounds(self.shape):
             state = state_
@@ -69,14 +86,16 @@ class Grid:
 
         return (state, reward)
 
-    def actions(self, state):
+    def actions(self, state=None):
         navigation = it.permutations(range(-1, 2), r=2)
 
         for action in it.starmap(State, navigation):
             if self.legal(action):
-                state_ = state + action
-                if state_.inbounds(self.shape):
-                    yield action
+                if state is not None:
+                    state_ = state + action
+                    if not state_.inbounds(self.shape):
+                        continue
+                yield action
 
     def blow(self, state):
         raise NotImplementedError()
@@ -85,8 +104,8 @@ class Grid:
         raise NotImplementedError()
 
 class WindyGrid(Grid):
-    def __init__(self, shape, goal):
-        super().__init__(shape, goal)
+    def __init__(self, rows, columns, goal):
+        super().__init__(rows, columns, goal)
         self.speeds = [0, 0, 0, 1, 1, 1, 2, 2, 1, 0]
 
     def blow(self, state):
