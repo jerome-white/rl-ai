@@ -24,15 +24,15 @@ args = arguments.parse_args()
 start = State(3, 0)
 goal = State(3, 8)
 
+grid = WindyGrid(args.rows, args.columns, goal)
+Q = EpsilonGreedyPolicy(grid, args.epsilon)
+
 fieldnames = [ 'episodes', 'steps' ]
 writer = csv.DictWriter(sys.stdout, fieldnames=fieldnames)
 writer.writeheader()
 
 for episode in range(args.episodes):
     logging.info(episode)
-
-    grid = WindyGrid(args.rows, args.columns, goal)
-    Q = EpsilonGreedyPolicy(grid, args.epsilon)
 
     steps = 0
     state = start
