@@ -52,14 +52,14 @@ class EpsilonGreedyPolicy(Q):
         if np.random.binomial(1, self.epsilon):
             actions = list(self.q[state].keys())
         else:
-            high_water_mark = -np.inf
+            jackpot = -np.inf
             actions = []
 
             for (action, reward) in self.q[state].items():
-                if reward >= high_water_mark:
-                    if reward > high_water_mark:
+                if reward >= jackpot:
+                    if reward > jackpot:
                         actions.clear()
-                        high_water_mark = reward
+                        jackpot = reward
                     actions.append(action)
 
         return random.choice(actions)
