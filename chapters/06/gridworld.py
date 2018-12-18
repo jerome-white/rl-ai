@@ -49,13 +49,15 @@ class EpsilonGreedyPolicy(Q):
         self.epsilon = epsilon
 
     def select(self, state):
-        if np.random.binomial(1, self.epsilon):
-            actions = list(self.q[state].keys())
-        else:
-            jackpot = -np.inf
-            actions = []
+        s = self.q[state]
 
-            for (action, reward) in self.q[state].items():
+        if np.random.binomial(1, self.epsilon):
+            actions = list(s.keys())
+        else:
+            actions = []
+            jackpot = -np.inf
+
+            for (action, reward) in s.items():
                 if reward >= jackpot:
                     if reward > jackpot:
                         actions.clear()
