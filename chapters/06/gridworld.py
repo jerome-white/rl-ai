@@ -70,8 +70,7 @@ class Grid:
         self.goal = goal
 
     def walk(self):
-        for i in it.product(*map(range, self.shape)):
-            yield State(*i)
+        yield from it.starmap(State, it.product(*map(range, self.shape)))
 
     def navigate(self, state, action):
         state_ = state + action
