@@ -5,6 +5,10 @@ import collections as cl
 
 import numpy as np
 
+#
+#
+#
+
 State_ = cl.namedtuple('State_', 'row, column')
 
 class State(State_):
@@ -22,6 +26,10 @@ class State(State_):
 
     def inbounds(self, bounds):
         return all([ 0 <= x < y for (x, y) in zip(self, bounds) ])
+
+#
+#
+#
 
 class Q:
     def __init__(self, grid):
@@ -66,10 +74,16 @@ class EpsilonGreedyPolicy(Q):
 
         return random.choice(actions)
 
-class Grid:
-    def __init__(self, rows, columns, goal):
+#
+#
+#
+
+class GridWorld:
+    def __init__(self, rows, columns, goal, compass, wind=None):
         self.shape = State(rows, columns)
         self.goal = goal
+        self.compass = compass
+        self.wind = wind
 
     def walk(self):
         yield from it.starmap(State, it.product(*map(range, self.shape)))
@@ -79,47 +93,65 @@ class Grid:
         if state_.inbounds(self.shape):
             state = state_
 
-        state_ = state + self.blow(state)
-        if state_.inbounds(self.shape):
-            state = state_
+        if self.wind is not None:
+            state_ = state + self.wind.blow(state)
+            if state_.inbounds(self.shape):
+                state = state_
 
         reward = -int(state != self.goal)
 
         return (state, reward)
 
     def actions(self, state=None):
-        for action in self.directions():
+        for action in self.compass:
             if state is not None:
                 state_ = state + action
                 if not state_.inbounds(self.shape):
                     continue
             yield action
 
-    def directions(self, action):
-        yield from it.starmap(State, self._directions())
+#
+#
+#
 
-    def blow(self, state):
+class Compass:
+    def __init__(self):
+        self.around = range(-1, 2)
+
+    def __iter__(self):
         raise NotImplementedError()
 
-class WindyGrid(Grid):
-    def __init__(self, rows, columns, goal):
-        super().__init__(rows, columns, goal)
-        self.speeds = [0, 0, 0, 1, 1, 1, 2, 2, 1, 0]
-
-    def blow(self, state):
-        return State(-self.speeds[state.column], 0)
-
-    def _directions(self):
-        for i in it.permutations(range(-1, 2), r=2):
+class FourPointCompass(Compass):
+    def __iter__(self):
+        for i in it.permutations(self.around, r=2):
             if op.xor(*map(abs, i)):
                 yield i
 
-class KingsMovesGrid(WindyGrid):
-    def __init__(self, rows, columns, goal, stationary=False):
-        super().__init__(rows, columns, goal)
+class KingsMoves(Compass):
+    def __init__(self, stationary=False):
+        super().__init__()
         self.stationary = stationary
 
-    def _directions(self):
-        for i in it.product(range(-1, 2), repeat=2):
+    def __iter__(self):
+        for i in it.product(self.around, repeat=2):
             if self.stationary or any(i):
                 yield i
+
+#
+#
+#
+
+class Wind:
+    def __init__(self):
+        columns = [0, 0, 0, 1, 1, 1, 2, 2, 1, 0]
+        self.speeds = list(map(op.neg, columns))
+
+    def blow(self, state):
+        return State(self.speeds[state.column], 0)
+
+class StochasticWind(Wind):
+    def blow(self, state):
+        state_ = super().blow(state)
+        increment = random.choice(range(-1, 2))
+
+        return state_ + State(increment, 0)

@@ -6,7 +6,7 @@ from argparse import ArgumentParser
 
 import numpy as np
 
-from gridworld import State, WindyGrid, EpsilonGreedyPolicy
+import gridworld as gw
 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(levelname)s %(message)s',
@@ -21,11 +21,15 @@ arguments.add_argument('--rows', type=int, default=7)
 arguments.add_argument('--columns', type=int, default=10)
 args = arguments.parse_args()
 
-start = State(3, 0)
-goal = State(3, 8)
+start = gw.State(3, 0)
+goal = gw.State(3, 8)
 
-grid = WindyGrid(args.rows, args.columns, goal)
-Q = EpsilonGreedyPolicy(grid, args.epsilon)
+grid = gw.GridWorld(args.rows,
+                    args.columns,
+                    goal,
+                    gw.FourPointCompass(),
+                    gw.Wind())
+Q = gw.EpsilonGreedyPolicy(grid, args.epsilon)
 
 fieldnames = [ 'episodes', 'steps' ]
 writer = csv.DictWriter(sys.stdout, fieldnames=fieldnames)
