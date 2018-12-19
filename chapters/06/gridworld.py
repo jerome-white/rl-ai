@@ -6,7 +6,7 @@ import collections as cl
 import numpy as np
 
 #
-#
+# A State is a position on the grid
 #
 
 State_ = cl.namedtuple('State_', 'row, column')
@@ -23,9 +23,6 @@ class State(State_):
 
     def __add__(self, other):
         return type(self)(*it.starmap(op.add, zip(self, other)))
-
-    def inbounds(self, bounds):
-        return all([ 0 <= x < y for (x, y) in zip(self, bounds) ])
 
 #
 #
@@ -88,14 +85,17 @@ class GridWorld:
     def walk(self):
         yield from it.starmap(State, it.product(*map(range, self.shape)))
 
+    def inbounds(self, state):
+        return all([ 0 <= x < y for (x, y) in zip(state, self.shape) ])
+
     def navigate(self, state, action):
         state_ = state + action
-        if state_.inbounds(self.shape):
+        if self.inbounds(state_):
             state = state_
 
         if self.wind is not None:
             state_ = state + self.wind.blow(state)
-            if state_.inbounds(self.shape):
+            if self.inbounds(state_):
                 state = state_
 
         reward = -int(state != self.goal)
@@ -106,7 +106,7 @@ class GridWorld:
         for action in self.compass:
             if state is not None:
                 state_ = state + action
-                if not state_.inbounds(self.shape):
+                if not self.inbounds(state_):
                     continue
             yield action
 
