@@ -88,15 +88,15 @@ class Grid:
         return (state, reward)
 
     def actions(self, state=None):
-        for action in self.navigate():
+        for action in self.directions():
             if state is not None:
                 state_ = state + action
                 if not state_.inbounds(self.shape):
                     continue
             yield action
 
-    def navigate(self, action):
-        yield from it.starmap(State, self._navigate())
+    def directions(self, action):
+        yield from it.starmap(State, self._directions())
 
     def blow(self, state):
         raise NotImplementedError()
@@ -109,7 +109,7 @@ class WindyGrid(Grid):
     def blow(self, state):
         return State(-self.speeds[state.column], 0)
 
-    def _navigate(self):
+    def _directions(self):
         for i in it.permutations(range(-1, 2), r=2):
             if op.xor(*map(abs, i)):
                 yield i
@@ -119,7 +119,7 @@ class KingsMovesGrid(WindyGrid):
         super().__init__(rows, columns, goal)
         self.stationary = stationary
 
-    def _navigate(self):
+    def _directions(self):
         for i in it.product(range(-1, 2), repeat=2):
             if self.stationary or any(i):
                 yield i
