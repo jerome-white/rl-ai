@@ -114,3 +114,7 @@ class WindyGrid(Grid):
 
     def legal(self, action):
         return op.xor(*map(abs, action))
+
+class KingsMovesGrid(WindyGrid):
+    def legal(self, action):
+        return True
