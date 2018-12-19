@@ -89,12 +89,8 @@ class GridWorld:
         return all([ 0 <= x < y for (x, y) in zip(state, self.shape) ])
 
     def navigate(self, state, action):
-        state_ = state + action
-        if self.inbounds(state_):
-            state = state_
-
-        if self.wind is not None:
-            state_ = state + self.wind.blow(state)
+        for f in (lambda _: action, self.wind.blow):
+            state_ = state + f(state)
             if self.inbounds(state_):
                 state = state_
 
