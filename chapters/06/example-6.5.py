@@ -50,8 +50,8 @@ for episode in range(args.episodes):
         later = (state_, action_)
 
         Q[now] += args.alpha * (reward + args.gamma * Q[later] - Q[now])
-        # logging.debug("s: {}, a: {}, r: {}, s': {}, Q: {}"
-        #               .format(state, action, reward, state_, Q[state]))
+        logging.debug("s: {}, a: {}, r: {}, s': {}, Q: {}"
+                      .format(state, action, reward, state_, Q[now]))
 
         (state, action) = (state_, action_)
         steps += 1
