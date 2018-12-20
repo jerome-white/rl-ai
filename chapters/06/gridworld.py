@@ -48,28 +48,31 @@ class Q:
     def select(self, state):
         raise NotImplementedError()
 
+    def amax(self, state):
+        best = []
+        target = -np.inf
+        actions = self.q[state]
+
+        for (action, reward) in actions.items():
+            if reward >= target:
+                if reward > target:
+                    best.clear()
+                    target = reward
+                best.append(action)
+
+        return random.choice(best)
+
 class EpsilonGreedyPolicy(Q):
     def __init__(self, grid, epsilon):
         super().__init__(grid)
         self.epsilon = epsilon
 
     def select(self, state):
-        s = self.q[state]
-
         if np.random.binomial(1, self.epsilon):
-            actions = list(s.keys())
+            actions = self.q[state].keys()
+            return random.choice(list(actions))
         else:
-            actions = []
-            jackpot = -np.inf
-
-            for (action, reward) in s.items():
-                if reward >= jackpot:
-                    if reward > jackpot:
-                        actions.clear()
-                        jackpot = reward
-                    actions.append(action)
-
-        return random.choice(actions)
+            return self.amax(state)
 
 #
 #
