@@ -93,7 +93,8 @@ class GridWorld:
 
     def navigate(self, state, action):
         for f in (lambda _: action, self.wind.blow):
-            state_ = state + f(state)
+            action_ = State(*f(state))
+            state_ = state + action_
             if self.inbounds(state_):
                 state = state_
 
@@ -104,7 +105,7 @@ class GridWorld:
     def actions(self, state=None):
         for action in self.compass:
             if state is not None:
-                state_ = state + action
+                state_ = state + State(*action)
                 if not self.inbounds(state_):
                     continue
             yield action
