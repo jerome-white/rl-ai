@@ -45,9 +45,6 @@ class Q:
             self.q[state] = {}
         self.q[state][action] = value
 
-    def select(self, state):
-        raise NotImplementedError()
-
     def amax(self, state):
         best = []
         target = -np.inf
@@ -61,6 +58,9 @@ class Q:
                 best.append(action)
 
         return random.choice(best)
+
+    def select(self, state):
+        raise NotImplementedError()
 
 class EpsilonGreedyPolicy(Q):
     def __init__(self, grid, epsilon):
