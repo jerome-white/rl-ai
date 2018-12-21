@@ -2,6 +2,7 @@ import sys
 import csv
 import logging
 import collections as cl
+import multiprocessing as mp
 from argparse import ArgumentParser
 
 import numpy as np
@@ -12,6 +13,50 @@ logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(levelname)s %(message)s',
                     datefmt='%H:%M:%S')
 
+def run(grid, args):
+    steps = 0
+    start = gw.State(3, 0)
+
+    Q = gw.EpsilonGreedyPolicy(grid, args.epsilon)
+
+    while steps < args.episodes:
+        state = start
+        action = Q.select(state)
+
+        while state != grid.goal:
+            (state_, reward) = grid.navigate(state, action)
+            action_ = Q.select(state_)
+
+            now = (state, action)
+            later = (state_, action_)
+
+            Q[now] += args.alpha * (reward + args.gamma * Q[later] - Q[now])
+            logging.debug("s: {}, a: {}, r: {}, s': {}, Q: {}"
+                          .format(state, action, reward, state_, Q[now]))
+
+            (state, action) = (state_, action_)
+
+            steps += 1
+            if steps > args.episodes:
+                break
+
+        yield steps
+
+def func(incoming, outgoing, args):
+    grid = gw.GridWorld(args.rows,
+                        args.columns,
+                        gw.State(3, 8),
+                        gw.FourPointCompass(),
+                        gw.Wind())
+
+    while True:
+        order = incoming.get()
+        logging.info(order)
+
+        for i in enumerate(run(grid, args)):
+            outgoing.put((order, *i))
+        outgoing.put(None)
+
 arguments = ArgumentParser()
 arguments.add_argument('--alpha', type=float, default=0.1)
 arguments.add_argument('--gamma', type=float, default=1)
@@ -19,41 +64,28 @@ arguments.add_argument('--epsilon', type=float, default=0.1)
 arguments.add_argument('--episodes', type=int, default=8000)
 arguments.add_argument('--rows', type=int, default=7)
 arguments.add_argument('--columns', type=int, default=10)
+arguments.add_argument('--repeat', type=int, default=1)
+arguments.add_argument('--workers', type=int, default=mp.cpu_count())
 args = arguments.parse_args()
 
-start = gw.State(3, 0)
-goal = gw.State(3, 8)
+incoming = mp.Queue()
+outgoing = mp.Queue()
 
-grid = gw.GridWorld(args.rows,
-                    args.columns,
-                    goal,
-                    gw.FourPointCompass(),
-                    gw.Wind())
-Q = gw.EpsilonGreedyPolicy(grid, args.epsilon)
+with mp.Pool(args.workers, func, (outgoing, incoming, args)):
+    jobs = 0
+    for i in range(args.repeat):
+        outgoing.put(i)
+        jobs += 1
 
-fieldnames = [ 'episodes', 'steps' ]
-writer = csv.DictWriter(sys.stdout, fieldnames=fieldnames)
-writer.writeheader()
+    writer = None
+    fieldnames = [ 'order', 'episodes', 'steps' ]
 
-for episode in range(args.episodes):
-    logging.info(episode)
-
-    steps = 0
-    state = start
-    action = Q.select(state)
-
-    while state != goal:
-        (state_, reward) = grid.navigate(state, action)
-        action_ = Q.select(state_)
-
-        now = (state, action)
-        later = (state_, action_)
-
-        Q[now] += args.alpha * (reward + args.gamma * Q[later] - Q[now])
-        logging.debug("s: {}, a: {}, r: {}, s': {}, Q: {}"
-                      .format(state, action, reward, state_, Q[now]))
-
-        (state, action) = (state_, action_)
-        steps += 1
-
-    writer.writerow(dict(zip(fieldnames, (episode, steps))))
+    while jobs:
+        result = incoming.get()
+        if result is None:
+            jobs -= 1
+        else:
+            if writer is None:
+                writer = csv.DictWriter(sys.stdout, fieldnames=fieldnames)
+                writer.writeheader()
+            writer.writerow(dict(zip(fieldnames, result)))
