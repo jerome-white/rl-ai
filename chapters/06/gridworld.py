@@ -79,8 +79,8 @@ class EpsilonGreedyPolicy(Q):
 #
 
 class GridWorld:
-    def __init__(self, rows, columns, goal, compass, wind=None):
-        self.shape = State(rows, columns)
+    def __init__(self, shape, goal, compass, wind=None):
+        self.shape = State(*shape)
         self.goal = goal
         self.compass = compass
         self.wind = wind

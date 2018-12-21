@@ -43,8 +43,7 @@ def run(grid, args):
         yield steps
 
 def func(incoming, outgoing, args):
-    grid = gw.GridWorld(args.rows,
-                        args.columns,
+    grid = gw.GridWorld((7, 10),
                         gw.State(3, 8),
                         gw.FourPointCompass(),
                         gw.Wind())
@@ -62,8 +61,6 @@ arguments.add_argument('--alpha', type=float, default=0.1)
 arguments.add_argument('--gamma', type=float, default=1)
 arguments.add_argument('--epsilon', type=float, default=0.1)
 arguments.add_argument('--episodes', type=int, default=8000)
-arguments.add_argument('--rows', type=int, default=7)
-arguments.add_argument('--columns', type=int, default=10)
 arguments.add_argument('--repeat', type=int, default=1)
 arguments.add_argument('--workers', type=int, default=mp.cpu_count())
 args = arguments.parse_args()
