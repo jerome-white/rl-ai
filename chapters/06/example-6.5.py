@@ -23,7 +23,7 @@ def run(grid, args):
         state = start
         action = Q.select(state)
 
-        while state != grid.goal:
+        while state != grid.goal and steps < args.time_steps:
             (state_, reward) = grid.navigate(state, action)
             action_ = Q.select(state_)
 
@@ -37,8 +37,6 @@ def run(grid, args):
             (state, action) = (state_, action_)
 
             steps += 1
-            if steps > args.time_steps:
-                break
 
         yield steps
 
