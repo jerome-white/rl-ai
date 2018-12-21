@@ -34,7 +34,7 @@ def run(grid, args):
             logging.debug("s: {}, a: {}, r: {}, s': {}, Q: {}"
                           .format(state, action, reward, state_, Q[now]))
 
-            (state, action) = (state_, action_)
+            (state, action) = later
 
             steps += 1
 
