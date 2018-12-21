@@ -19,7 +19,7 @@ def run(grid, args):
 
     Q = gw.EpsilonGreedyPolicy(grid, args.epsilon)
 
-    while steps < args.episodes:
+    while steps < args.time_steps:
         state = start
         action = Q.select(state)
 
@@ -37,7 +37,7 @@ def run(grid, args):
             (state, action) = (state_, action_)
 
             steps += 1
-            if steps > args.episodes:
+            if steps > args.time_steps:
                 break
 
         yield steps
@@ -60,7 +60,7 @@ arguments = ArgumentParser()
 arguments.add_argument('--alpha', type=float, default=0.1)
 arguments.add_argument('--gamma', type=float, default=1)
 arguments.add_argument('--epsilon', type=float, default=0.1)
-arguments.add_argument('--episodes', type=int, default=8000)
+arguments.add_argument('--time-steps', type=int, default=8000)
 arguments.add_argument('--repeat', type=int, default=1)
 arguments.add_argument('--workers', type=int, default=mp.cpu_count())
 args = arguments.parse_args()
