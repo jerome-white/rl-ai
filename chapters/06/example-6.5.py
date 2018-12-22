@@ -12,24 +12,26 @@ logging.basicConfig(level=logging.INFO,
                     datefmt='%H:%M:%S')
 
 def func(incoming, outgoing, args):
-    grid = gw.GridWorld((7, 10),
-                        gw.State(3, 7),
-                        gw.FourPointCompass(),
-                        gw.Wind())
+    keys = [ 'order', 'experiment', 'episode', 'step' ]
+
+    dimensions = (7, 10)
+    start = gw.State(3, 0)
+    goal = gw.State(3, 7)
 
     while True:
-        order = incoming.get()
+        (order, name, config) = incoming.get()
 
-        start = gw.State(3, 0)
+        logging.info('{} {}'.format(order, name))
+
+        grid = gw.GridWorld(dimensions, goal, *[ x() for x in config ])
         policy = gw.EpsilonGreedyPolicy(grid, args.epsilon)
         process = gw.sarsa(grid, start, policy, args.alpha, args.gamma)
 
         for (i, (episode, *_)) in enumerate(process):
             if i > args.time_steps:
                 break
-            message = (order, episode, i)
-            logging.info('{} {} {}'.format(*message))
-            outgoing.put(message)
+            result = dict(zip(keys, (order, name, episode, i)))
+            outgoing.put(result)
         outgoing.put(None)
 
 arguments = ArgumentParser()
@@ -45,20 +47,26 @@ incoming = mp.Queue()
 outgoing = mp.Queue()
 
 with mp.Pool(args.workers, func, (outgoing, incoming, args)):
+    experiments = {
+        'example 6.5': (gw.FourPointCompass, gw.Wind),
+        'exercise 6.6a': (gw.KingsMoves, gw.Wind),
+        'exercise 6.6b': (gw.KingsMovesNinth, gw.Wind),
+        'exercise 6.7': (gw.KingsMoves, gw.StochasticWind),
+    }
+
     jobs = 0
-    for i in range(args.repeat):
-        outgoing.put(i)
-        jobs += 1
+    for i in experiments.items():
+        for j in range(args.repeat):
+            outgoing.put((j, *i))
+            jobs += 1
 
     writer = None
-    fieldnames = [ 'order', 'episode', 'step' ]
-
     while jobs:
         result = incoming.get()
         if result is None:
             jobs -= 1
         else:
             if writer is None:
-                writer = csv.DictWriter(sys.stdout, fieldnames=fieldnames)
+                writer = csv.DictWriter(sys.stdout, fieldnames=result.keys())
                 writer.writeheader()
-            writer.writerow(dict(zip(fieldnames, result)))
+            writer.writerow(result)
