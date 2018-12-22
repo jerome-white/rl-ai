@@ -11,6 +11,6 @@ alludes to the difference.
 Although the book says alpha is 0.1, the figure can only be reproduced
 using a value of 0.5:
 
-```python
-python example-6.5.py --alpha 0.5
+```bash
+$> python example-6.5.py --alpha 0.5
 ```
