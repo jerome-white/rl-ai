@@ -93,8 +93,8 @@ class GridWorld:
         return all([ 0 <= x < y for (x, y) in zip(state, self.shape) ])
 
     def navigate(self, state, action):
-        for f in (lambda _: State(*action), self.wind.blow):
-            state_ = state + f(state)
+        for f in (lambda _: action, self.wind.blow):
+            state_ = state + State(*f(state))
             if self.inbounds(state_):
                 state = state_
 
@@ -147,11 +147,11 @@ class Wind:
         self.speeds = list(map(op.neg, columns))
 
     def blow(self, state):
-        return State(self.speeds[state.column], 0)
+        return (self.speeds[state.column], 0)
 
 class StochasticWind(Wind):
     def blow(self, state):
-        state_ = super().blow(state)
-        increment = random.choice(range(-1, 2))
+        (movement, ) = super().blow(state)
+        movement += random.choice(range(-1, 2))
 
-        return state_ + State(increment, 0)
+        return (movement, 0)
