@@ -11,31 +11,6 @@ logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(levelname)s %(message)s',
                     datefmt='%H:%M:%S')
 
-def run(grid, args):
-    start = gw.State(3, 0)
-    Q = gw.EpsilonGreedyPolicy(grid, args.epsilon)
-
-    for episode in it.count():
-        step = 0
-        state = start
-        action = Q.select(state)
-
-        while state != grid.goal:
-            (state_, reward) = grid.navigate(state, action)
-            action_ = Q.select(state_)
-
-            now = (state, action)
-            later = (state_, action_)
-
-            Q[now] += args.alpha * (reward + args.gamma * Q[later] - Q[now])
-            logging.debug("s: {}, a: {}, r: {}, s': {}, Q: {}"
-                          .format(state, action, reward, state_, Q[now]))
-
-            (state, action) = later
-
-            yield (episode, step)
-            step += 1
-
 def func(incoming, outgoing, args):
     grid = gw.GridWorld((7, 10),
                         gw.State(3, 7),
@@ -45,7 +20,11 @@ def func(incoming, outgoing, args):
     while True:
         order = incoming.get()
 
-        for (i, (episode, _)) in enumerate(run(grid, args)):
+        start = gw.State(3, 0)
+        policy = gw.EpsilonGreedyPolicy(grid, args.epsilon)
+        process = gw.sarsa(grid, start, policy, args.alpha, args.gamma)
+
+        for (i, (episode, _)) in enumerate(process):
             if i > args.time_steps:
                 break
             message = (order, episode, i)

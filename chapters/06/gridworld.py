@@ -5,6 +5,26 @@ import collections as cl
 
 import numpy as np
 
+def sarsa(grid, start, Q, alpha, gamma):
+    for episode in it.count():
+        step = 0
+        state = start
+        action = Q.select(state)
+
+        while state != grid.goal:
+            (state_, reward) = grid.navigate(state, action)
+            action_ = Q.select(state_)
+
+            now = (state, action)
+            later = (state_, action_)
+
+            Q[now] += alpha * (reward + gamma * Q[later] - Q[now])
+
+            (state, action) = later
+
+            yield (episode, step)
+            step += 1
+
 #
 # A State is a position on the grid
 #
@@ -28,7 +48,7 @@ class State(State_):
 #
 #
 
-class Q:
+class Policy:
     def __init__(self, grid):
         self.q = {}
 
@@ -63,7 +83,7 @@ class Q:
     def select(self, state):
         raise NotImplementedError()
 
-class EpsilonGreedyPolicy(Q):
+class EpsilonGreedyPolicy(Policy):
     def __init__(self, grid, epsilon):
         super().__init__(grid)
         self.epsilon = epsilon
