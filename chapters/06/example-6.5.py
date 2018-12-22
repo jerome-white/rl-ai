@@ -12,12 +12,13 @@ logging.basicConfig(level=logging.INFO,
                     datefmt='%H:%M:%S')
 
 def run(grid, args):
-    steps = 0
     start = gw.State(3, 0)
-
     Q = gw.EpsilonGreedyPolicy(grid, args.epsilon)
 
-    for i in it.count():
+    for episode in it.count():
+        logging.info(episode)
+
+        step = 0
         state = start
         action = Q.select(state)
 
@@ -34,10 +35,8 @@ def run(grid, args):
 
             (state, action) = later
 
-            steps += 1
-            if steps > args.time_steps:
-                return
-            yield (i, steps)
+            yield (episode, step)
+            step += 1
 
 def func(incoming, outgoing, args):
     grid = gw.GridWorld((7, 10),
@@ -47,10 +46,11 @@ def func(incoming, outgoing, args):
 
     while True:
         order = incoming.get()
-        logging.info(order)
 
-        for i in run(grid, args):
-            outgoing.put((order, *i))
+        for (i, (episode, _)) in enumerate(run(grid, args)):
+            if i > args.time_steps:
+                break
+            outgoing.put((order, episode, i))
         outgoing.put(None)
 
 arguments = ArgumentParser()
