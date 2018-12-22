@@ -41,7 +41,7 @@ def run(grid, args):
 
 def func(incoming, outgoing, args):
     grid = gw.GridWorld((7, 10),
-                        gw.State(3, 8),
+                        gw.State(3, 7),
                         gw.FourPointCompass(),
                         gw.Wind())
 
