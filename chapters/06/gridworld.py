@@ -32,7 +32,7 @@ class Q:
     def __init__(self, grid):
         self.q = {}
 
-        for state in grid.walk():
+        for state in grid:
             for action in grid.actions(state):
                 self[(state, action)] = 0
 
@@ -86,8 +86,16 @@ class GridWorld:
         self.compass = compass
         self.wind = wind
 
-    def walk(self):
+    def __iter__(self):
         yield from it.starmap(State, it.product(*map(range, self.shape)))
+
+    def actions(self, state=None):
+        for action in self.compass:
+            if state is not None:
+                state_ = state + State(*action)
+                if not self.inbounds(state_):
+                    continue
+            yield action
 
     def inbounds(self, state):
         return all([ 0 <= x < y for (x, y) in zip(state, self.shape) ])
@@ -101,14 +109,6 @@ class GridWorld:
         reward = -int(state != self.goal)
 
         return (state, reward)
-
-    def actions(self, state=None):
-        for action in self.compass:
-            if state is not None:
-                state_ = state + State(*action)
-                if not self.inbounds(state_):
-                    continue
-            yield action
 
 #
 #
