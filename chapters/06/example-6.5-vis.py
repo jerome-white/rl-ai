@@ -6,8 +6,8 @@ import matplotlib.pyplot as plt
 
 df = pd.read_csv(sys.stdin)
 
-sns.lineplot(x='steps',
-             y='episodes',
+sns.lineplot(x='step',
+             y='episode',
              data=df)
 
 plt.grid(True)
