@@ -169,7 +169,7 @@ class Wind:
 
 class StochasticWind(Wind):
     def blow(self, state):
-        (movement, ) = super().blow(state)
+        (movement, _) = super().blow(state)
         movement += random.choice(range(-1, 2))
 
         return (movement, 0)
