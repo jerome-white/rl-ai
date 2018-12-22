@@ -2,11 +2,8 @@ import sys
 import csv
 import logging
 import itertools as it
-import collections as cl
 import multiprocessing as mp
 from argparse import ArgumentParser
-
-import numpy as np
 
 import gridworld as gw
 
