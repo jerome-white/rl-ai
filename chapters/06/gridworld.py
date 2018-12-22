@@ -147,15 +147,13 @@ class FourPointCompass(Compass):
             if op.xor(*map(abs, i)):
                 yield i
 
-class KingsMoves(Compass):
-    def __init__(self, stationary=False):
-        super().__init__()
-        self.stationary = stationary
-
+class KingsMovesNinth(Compass):
     def __iter__(self):
-        for i in it.product(self.around, repeat=2):
-            if self.stationary or any(i):
-                yield i
+        yield from it.product(self.around, repeat=2)
+
+class KingsMoves(KingsMovesNinth):
+    def __iter__(self):
+        yield from filter(lambda x: any(x), super().__iter__())
 
 #
 #
