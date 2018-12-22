@@ -32,8 +32,9 @@ class Q:
     def __init__(self, grid):
         self.q = {}
 
-        for i in it.product(grid.walk(), grid.actions()):
-            self[i] = 0
+        for state in grid.walk():
+            for action in grid.actions(state):
+                self[(state, action)] = 0
 
     def __getitem__(self, item):
         (state, action) = item
