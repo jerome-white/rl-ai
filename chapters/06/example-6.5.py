@@ -72,7 +72,7 @@ with mp.Pool(args.workers, func, (outgoing, incoming, args)):
         jobs += 1
 
     writer = None
-    fieldnames = [ 'order', 'episodes', 'steps' ]
+    fieldnames = [ 'order', 'episode', 'step' ]
 
     while jobs:
         result = incoming.get()
