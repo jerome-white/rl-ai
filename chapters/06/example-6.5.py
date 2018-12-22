@@ -1,7 +1,4 @@
-import sys
-import csv
 import logging
-import itertools as it
 import multiprocessing as mp
 from argparse import ArgumentParser
 
