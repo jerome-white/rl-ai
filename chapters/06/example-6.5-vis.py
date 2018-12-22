@@ -8,8 +8,6 @@ df = pd.read_csv(sys.stdin)
 
 sns.lineplot(x='steps',
              y='episodes',
-             hue='order',
-             estimator=None,
              data=df)
 
 plt.grid(True)

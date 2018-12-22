@@ -1,6 +1,7 @@
 import sys
 import csv
 import logging
+import itertools as it
 import collections as cl
 import multiprocessing as mp
 from argparse import ArgumentParser
@@ -19,11 +20,11 @@ def run(grid, args):
 
     Q = gw.EpsilonGreedyPolicy(grid, args.epsilon)
 
-    while steps < args.time_steps:
+    for i in it.count():
         state = start
         action = Q.select(state)
 
-        while state != grid.goal and steps < args.time_steps:
+        while state != grid.goal:
             (state_, reward) = grid.navigate(state, action)
             action_ = Q.select(state_)
 
@@ -37,8 +38,9 @@ def run(grid, args):
             (state, action) = later
 
             steps += 1
-
-        yield steps
+            if steps > args.time_steps:
+                return
+            yield (i, steps)
 
 def func(incoming, outgoing, args):
     grid = gw.GridWorld((7, 10),
@@ -50,7 +52,7 @@ def func(incoming, outgoing, args):
         order = incoming.get()
         logging.info(order)
 
-        for i in enumerate(run(grid, args)):
+        for i in run(grid, args):
             outgoing.put((order, *i))
         outgoing.put(None)
 
@@ -73,7 +75,7 @@ with mp.Pool(args.workers, func, (outgoing, incoming, args)):
         jobs += 1
 
     writer = None
-    fieldnames = [ 'order', 'episodes', 'steps' ]
+    fieldnames = [ 'order', 'steps', 'episodes' ]
 
     while jobs:
         result = incoming.get()
