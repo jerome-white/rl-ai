@@ -16,8 +16,6 @@ def run(grid, args):
     Q = gw.EpsilonGreedyPolicy(grid, args.epsilon)
 
     for episode in it.count():
-        logging.info(episode)
-
         step = 0
         state = start
         action = Q.select(state)
@@ -50,7 +48,9 @@ def func(incoming, outgoing, args):
         for (i, (episode, _)) in enumerate(run(grid, args)):
             if i > args.time_steps:
                 break
-            outgoing.put((order, episode, i))
+            message = (order, episode, i)
+            logging.info('{} {} {}'.format(*message))
+            outgoing.put(message)
         outgoing.put(None)
 
 arguments = ArgumentParser()
