@@ -24,7 +24,7 @@ def func(incoming, outgoing, args):
         policy = gw.EpsilonGreedyPolicy(grid, args.epsilon)
         process = gw.sarsa(grid, start, policy, args.alpha, args.gamma)
 
-        for (i, (episode, _)) in enumerate(process):
+        for (i, (episode, *_)) in enumerate(process):
             if i > args.time_steps:
                 break
             message = (order, episode, i)

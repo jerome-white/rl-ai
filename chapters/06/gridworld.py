@@ -22,7 +22,7 @@ def sarsa(grid, start, Q, alpha, gamma):
 
             (state, action) = later
 
-            yield (episode, step)
+            yield (episode, step, reward)
             step += 1
 
 #
