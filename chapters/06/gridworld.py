@@ -158,6 +158,15 @@ class StochasticWind(Wind):
 #
 #
 
+Environment_ = cl.namedtuple('Environment', 'state, action')
+
+class Environment(Environment_):
+    def __new__(cls, state, action=None):
+        return super(Environment, cls).__new__(cls, state, action)
+
+    def __bool__(self):
+        return all([ x is not None for x in self ])
+
 class Learning:
     def __init__(self, grid, start, policy, alpha, gamma):
         self.grid = grid
@@ -166,52 +175,42 @@ class Learning:
         self.alpha = alpha
         self.gamma = gamma
 
-        self.state = None
-        self.action = None
-
     def __iter__(self):
         for episode in it.count():
             step = 0
-            self.state = self.start
-            self.action = None
+            env = Environment(self.start)
 
-            while self.state != self.grid.goal:
-                reward = self.step()
+            while env.state != self.grid.goal:
+                (env, reward) = self.step(env)
                 yield (episode, step, reward)
                 step += 1
+
+    def update(self, reward, env, Q_):
+        self.Q[env] += self.alpha * (reward + self.gamma * Q_ - self.Q[env])
 
     def step(self):
         raise NotImplementedError()
 
 class Sarsa(Learning):
-    def step(self):
-        if self.action is None:
-            assert(self.state == self.start)
-            self.action = self.Q.select(self.state)
+    def step(self, env):
+        if not env:
+            assert(env.state == self.start)
+            action = self.Q.select(env.state)
+            env = Environment(env.state, action)
 
-        (state_, reward) = self.grid.navigate(self.state, self.action)
+        (state_, reward) = self.grid.navigate(*env)
         action_ = self.Q.select(state_)
 
-        now = (self.state, self.action)
-        later = (state_, action_)
+        env_ = Environment(state_, action_)
+        self.update(self.Q[env_], env, reward)
 
-        target = reward + self.gamma * self.Q[later]
-        difference = target - self.Q[now]
-        self.Q[now] += self.alpha * difference
-
-        (self.state, self.action) = later
-
-        return reward
+        return (env_, reward)
 
 class QLearning(Learning):
-    def step(self):
-        action = self.Q.select(self.state)
-        (state_, reward) = self.grid.navigate(self.state, action)
+    def step(self, env):
+        action = self.Q.select(env.state)
+        (state_, reward) = self.grid.navigate(env.state, action)
 
-        target = reward + self.gamma * self.Q.amax(state_)
-        difference = target - self.Q[now]
-        self.Q[now] += self.alpha * difference
+        self.update(self.Q.amax(state_), env, reward)
 
-        self.state = state_
-
-        return reward
+        return (Environment(state_), reward)
