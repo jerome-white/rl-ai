@@ -185,8 +185,10 @@ class Learning:
                 yield (episode, step, reward)
                 step += 1
 
-    def update(self, reward, env, Q_):
-        self.Q[env] += self.alpha * (reward + self.gamma * Q_ - self.Q[env])
+    def update(self, env, env_, reward):
+        target = reward + self.gamma * self.Q[env_]
+        difference = target - self.Q[env]
+        self.Q[env] += self.alpha * difference
 
     def step(self):
         raise NotImplementedError()
@@ -202,15 +204,19 @@ class Sarsa(Learning):
         action_ = self.Q.select(state_)
 
         env_ = Environment(state_, action_)
-        self.update(self.Q[env_], env, reward)
+        self.update(env, env_, reward)
 
         return (env_, reward)
 
 class QLearning(Learning):
     def step(self, env):
         action = self.Q.select(env.state)
-        (state_, reward) = self.grid.navigate(env.state, action)
+        env = Environment(env.state, action)
 
-        self.update(self.Q.amax(state_), env, reward)
+        (state_, reward) = self.grid.navigate(*env)
+        action_ = self.Q.amax(state_)
+
+        env_ = Environment(state_, action_)
+        self.update(env, env_, reward)
 
         return (Environment(state_), reward)
