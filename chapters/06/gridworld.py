@@ -166,47 +166,52 @@ class Learning:
         self.alpha = alpha
         self.gamma = gamma
 
-    def __iter__(self):
-        raise NotImplementedError()
+        self.state = None
+        self.action = None
 
-class Sarsa(Learning):
     def __iter__(self):
         for episode in it.count():
             step = 0
-            state = self.start
-            action = self.Q.select(state)
+            self.state = self.start
+            self.action = None
 
-            while state != self.grid.goal:
-                (state_, reward) = self.grid.navigate(state, action)
-                action_ = self.Q.select(state_)
-
-                now = (state, action)
-                later = (state_, action_)
-
-                target = reward + self.gamma * self.Q[later]
-                difference = target - self.Q[now]
-                self.Q[now] += self.alpha * difference
-
-                (state, action) = later
-
+            while self.state != self.grid.goal:
+                reward = self.step()
                 yield (episode, step, reward)
                 step += 1
 
+    def step(self):
+        raise NotImplementedError()
+
+class Sarsa(Learning):
+    def step(self):
+        if self.action is None:
+            assert(self.state == self.start)
+            self.action = self.Q.select(self.state)
+
+        (state_, reward) = self.grid.navigate(self.state, self.action)
+        action_ = self.Q.select(state_)
+
+        now = (self.state, self.action)
+        later = (state_, action_)
+
+        target = reward + self.gamma * self.Q[later]
+        difference = target - self.Q[now]
+        self.Q[now] += self.alpha * difference
+
+        (self.state, self.action) = later
+
+        return reward
+
 class QLearning(Learning):
-    def __iter__(self):
-        for episode in it.count():
-            steps = 0
-            state = start
+    def step(self):
+        action = self.Q.select(self.state)
+        (state_, reward) = self.grid.navigate(self.state, action)
 
-            while state != goal:
-                action = self.Q.select(state)
-                (state_, reward) = self.grid.navigate(state, action)
+        target = reward + self.gamma * self.Q.amax(state_)
+        difference = target - self.Q[now]
+        self.Q[now] += self.alpha * difference
 
-                target = reward + self.gamma * self.Q.amax(state_)
-                difference = target - self.Q[now]
-                self.Q[now] += self.alpha * difference
+        self.state = state_
 
-                state = state_
-
-                yield (episode, step, reward)
-                steps += 1
+        return reward
