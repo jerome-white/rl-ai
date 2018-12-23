@@ -202,8 +202,8 @@ class Sarsa(Learning):
 
         (state_, reward) = self.grid.navigate(*env)
         action_ = self.Q.select(state_)
-
         env_ = Environment(state_, action_)
+
         self.update(env, env_, reward)
 
         return (env_, reward)
@@ -215,8 +215,8 @@ class QLearning(Learning):
 
         (state_, reward) = self.grid.navigate(*env)
         action_ = self.Q.amax(state_)
-
         env_ = Environment(state_, action_)
+
         self.update(env, env_, reward)
 
         return (Environment(state_), reward)
