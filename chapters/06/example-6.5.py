@@ -26,7 +26,7 @@ def func(incoming, outgoing, args):
 
         grid = gw.GridWorld(dimensions, goal, *[ x() for x in config ])
         policy = gw.EpsilonGreedyPolicy(grid, args.epsilon)
-        process = gw.sarsa(grid, start, policy, args.alpha, args.gamma)
+        process = gw.Sarsa(grid, start, policy, args.alpha, args.gamma)
 
         for (i, (episode, *_)) in enumerate(process):
             if i > args.time_steps:

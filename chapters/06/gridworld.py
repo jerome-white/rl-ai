@@ -5,26 +5,6 @@ import collections as cl
 
 import numpy as np
 
-def sarsa(grid, start, Q, alpha, gamma):
-    for episode in it.count():
-        step = 0
-        state = start
-        action = Q.select(state)
-
-        while state != grid.goal:
-            (state_, reward) = grid.navigate(state, action)
-            action_ = Q.select(state_)
-
-            now = (state, action)
-            later = (state_, action_)
-
-            Q[now] += alpha * (reward + gamma * Q[later] - Q[now])
-
-            (state, action) = later
-
-            yield (episode, step, reward)
-            step += 1
-
 #
 # A State is a position on the grid
 #
@@ -173,3 +153,60 @@ class StochasticWind(Wind):
         movement += random.choice(range(-1, 2))
 
         return (movement, 0)
+
+#
+#
+#
+
+class Learning:
+    def __init__(self, grid, start, policy, alpha, gamma):
+        self.grid = grid
+        self.start = start
+        self.Q = policy
+        self.alpha = alpha
+        self.gamma = gamma
+
+    def __iter__(self):
+        raise NotImplementedError()
+
+class Sarsa(Learning):
+    def __iter__(self):
+        for episode in it.count():
+            step = 0
+            state = self.start
+            action = self.Q.select(state)
+
+            while state != self.grid.goal:
+                (state_, reward) = self.grid.navigate(state, action)
+                action_ = self.Q.select(state_)
+
+                now = (state, action)
+                later = (state_, action_)
+
+                target = reward + self.gamma * self.Q[later]
+                difference = target - self.Q[now]
+                self.Q[now] += self.alpha * difference
+
+                (state, action) = later
+
+                yield (episode, step, reward)
+                step += 1
+
+class QLearning(Learning):
+    def __iter__(self):
+        for episode in it.count():
+            steps = 0
+            state = start
+
+            while state != goal:
+                action = self.Q.select(state)
+                (state_, reward) = self.grid.navigate(state, action)
+
+                target = reward + self.gamma * self.Q.amax(state_)
+                difference = target - self.Q[now]
+                self.Q[now] += self.alpha * difference
+
+                state = state_
+
+                yield (episode, step, reward)
+                steps += 1
