@@ -1,26 +1,28 @@
 import gridworld as gw
 
-class Calm(gw.Wind):
+class Fall(gw.Wind):
+    def __init__(self, shape):
+        super().__init__()
+
+        shape = [ getattr(shape, x) - 1 for x in ('row', 'column') ]
+        (self.rows, self.columns) = shape
+
     def blow(self, state):
-        return state
+        if state.row == self.rows and 0 < state.column < self.columns:
+            movement = -state.column
+        else:
+            movement = 0
+
+        return (0, movement)
 
 class Cliff(gw.GridWorld):
-    def __init__(self, rows, columns, goal, start):
-        super().__init__(rows, columns, goal, gw.FourPointCompass(), Calm())
+    def __init__(self, shape, start, goal):
+        super().__init__(shape, goal, gw.FourPointCompass(), Fall(shape))
         self.start = start
 
-        self.the_cliff = set()
-        cliff = self.shape.rows - 1
-        for i in range(1, self.shape.columns):
-            state = gw.State(cliff, i)
-            self.the_cliff.add(state)
-
     def navigate(self, state, action):
-        state += action
-        if state in self.the_cliff:
-            state = self.start
-            reward = -100
-        else:
-            reward = -1
+        (s, reward) = super().navigate(state, action)
+        if state != self.start and s == self.start:
+            reward *= 100
 
-        return (state, reward)
+        return (s, reward)
