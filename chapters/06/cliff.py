@@ -21,8 +21,8 @@ class Cliff(gw.GridWorld):
         self.start = start
 
     def navigate(self, state, action):
-        (s, reward) = super().navigate(state, action)
-        if state != self.start and s == self.start:
+        (state_, reward) = super().navigate(state, action)
+        if state_ == self.start:
             reward *= 100
 
-        return (s, reward)
+        return (state_, reward)
