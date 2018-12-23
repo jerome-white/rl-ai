@@ -71,16 +71,23 @@ arguments.add_argument('--gamma', type=float, default=1)
 arguments.add_argument('--epsilon', type=float, default=0.1)
 arguments.add_argument('--episodes', type=int, default=500)
 arguments.add_argument('--repeat', type=int, default=1)
+arguments.add_argument('--smoothing', type=int)
 arguments.add_argument('--workers', type=int, default=mp.cpu_count())
 args = arguments.parse_args()
 
 df = pd.DataFrame.from_dict(do(args))
-df = df.groupby(['order', 'episode', 'experiment']).mean().reset_index()
+df = (df
+      .groupby(['order', 'episode', 'experiment'])
+      .sum()
+      .rolling(args.smoothing)
+      .mean()
+      .reset_index())
 
 logging.info('plotting {}'.format(len(df)))
 sns.lineplot(x='episode',
              y='reward',
              hue='experiment',
              data=df)
+plt.ylim((-100, 0))
 plt.grid(True)
 plt.savefig('figure-6.14.png')
