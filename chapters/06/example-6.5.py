@@ -20,9 +20,9 @@ def func(incoming, outgoing, args):
     goal = gw.State(3, 7)
 
     while True:
-        (order, name, config) = incoming.get()
+        (order, experiment, config) = incoming.get()
 
-        logging.info('{} {}'.format(order, name))
+        logging.info('{} {}'.format(order, experiment))
 
         grid = gw.GridWorld(dimensions, goal, *[ x() for x in config ])
         policy = gw.EpsilonGreedyPolicy(grid, args.epsilon)
@@ -31,7 +31,7 @@ def func(incoming, outgoing, args):
         for (i, (episode, *_)) in enumerate(process):
             if i > args.time_steps:
                 break
-            result = dict(zip(keys, (order, name, episode, i)))
+            result = dict(zip(keys, (order, experiment, episode, i)))
             outgoing.put(result)
         outgoing.put(None)
 
