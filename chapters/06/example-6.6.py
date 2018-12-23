@@ -75,11 +75,9 @@ arguments.add_argument('--workers', type=int, default=mp.cpu_count())
 args = arguments.parse_args()
 
 df = pd.DataFrame.from_dict(do(args))
+df = df.groupby(['order', 'episode', 'experiment']).sum().reset_index()
+
 logging.info('plotting {}'.format(len(df)))
-print(df.head())
-
-df = df.groupby(['order', 'episode']).sum().reset_index()
-
 sns.lineplot(x='episode',
              y='reward',
              hue='experiment',
