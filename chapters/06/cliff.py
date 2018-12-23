@@ -4,8 +4,7 @@ class Fall(gw.Wind):
     def __init__(self, shape):
         super().__init__()
 
-        shape = [ getattr(shape, x) - 1 for x in ('row', 'column') ]
-        (self.rows, self.columns) = shape
+        (self.rows, self.columns) = [ x - 1 for x in shape ]
 
     def blow(self, state):
         if state.row == self.rows and 0 < state.column < self.columns:
@@ -16,7 +15,7 @@ class Fall(gw.Wind):
         return (0, movement)
 
 class Cliff(gw.GridWorld):
-    def __init__(self, shape, start, goal):
+    def __init__(self, shape, goal, start):
         super().__init__(shape, goal, gw.FourPointCompass(), Fall(shape))
         self.start = start
 
