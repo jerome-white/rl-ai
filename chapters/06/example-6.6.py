@@ -14,10 +14,6 @@ logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(levelname)s %(message)s',
                     datefmt='%H:%M:%S')
 
-class ClassicGrid(gw.GridWorld):
-    def __init__(self, shape, goal):
-        super().__init__(shape, goal, gw.FourPointCompass(), gw.Wind())
-
 def func(incoming, outgoing, args):
     keys = [ 'order', 'experiment', 'episode', 'reward' ]
 
