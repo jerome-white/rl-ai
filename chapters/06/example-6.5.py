@@ -1,6 +1,7 @@
 import logging
 import multiprocessing as mp
 from argparse import ArgumentParser
+from collections import OrderedDict
 
 import pandas as pd
 import seaborn as sns
@@ -24,7 +25,8 @@ def func(incoming, outgoing, args):
 
         logging.info('{} {}'.format(order, experiment))
 
-        grid = gw.GridWorld(dimensions, goal, *[ x() for x in config ])
+        (compass, wind) = config
+        grid = gw.WindyGridWorld(dimensions, goal, compass(), wind())
         policy = gw.EpsilonGreedyPolicy(grid, args.epsilon)
         process = gw.Sarsa(grid, start, policy, args.alpha, args.gamma)
 
@@ -35,18 +37,11 @@ def func(incoming, outgoing, args):
             outgoing.put(result)
         outgoing.put(None)
 
-def do(args):
+def do(args, experiments):
     incoming = mp.Queue()
     outgoing = mp.Queue()
 
     with mp.Pool(args.workers, func, (outgoing, incoming, args)):
-        experiments = {
-            'example 6.5': (gw.FourPointCompass, gw.Wind),
-            'exercise 6.6a': (gw.KingsMoves, gw.Wind),
-            'exercise 6.6b': (gw.KingsMovesNinth, gw.Wind),
-            'exercise 6.7': (gw.KingsMoves, gw.StochasticWind),
-        }
-
         jobs = 0
         for i in experiments.items():
             for j in range(args.repeat):
@@ -69,12 +64,20 @@ arguments.add_argument('--repeat', type=int, default=1)
 arguments.add_argument('--workers', type=int, default=mp.cpu_count())
 args = arguments.parse_args()
 
-df = pd.DataFrame.from_dict(do(args))
+experiments = OrderedDict([
+    ('example 6.5', (gw.FourPointCompass, gw.Wind)),
+    ('exercise 6.6a', (gw.KingsMoves, gw.Wind)),
+    ('exercise 6.6b', (gw.KingsMovesNinth, gw.Wind)),
+    ('exercise 6.7', (gw.KingsMoves, gw.StochasticWind)),
+])
+
+df = pd.DataFrame.from_dict(do(args, experiments))
 
 logging.info('plotting {}'.format(len(df)))
 sns.lineplot(x='step',
              y='episode',
              hue='experiment',
+             hue_order=experiments.keys(),
              data=df)
 plt.grid(True)
 plt.savefig('figure-6.11.png')
