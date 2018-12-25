@@ -1,5 +1,4 @@
 import logging
-import functools as ft
 import multiprocessing as mp
 from argparse import ArgumentParser
 from collections import OrderedDict
@@ -62,7 +61,6 @@ arguments.add_argument('--gamma', type=float, default=1)
 arguments.add_argument('--epsilon', type=float, default=0.1)
 arguments.add_argument('--episodes', type=int, default=500)
 arguments.add_argument('--repeat', type=int, default=1)
-arguments.add_argument('--smoothing', type=int)
 arguments.add_argument('--workers', type=int, default=mp.cpu_count())
 args = arguments.parse_args()
 
