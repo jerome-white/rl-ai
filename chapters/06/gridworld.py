@@ -192,38 +192,43 @@ class Learning:
     def __iter__(self):
         for episode in it.count():
             step = 0
-            env = Environment(self.start)
+            env = self.setup(self.start)
 
             while env.state != self.grid.goal:
-                (env, reward) = self.step(env)
+                (env, reward, env_) = self.explore(env)
+
+                target = reward + self.gamma * self.Q[env_]
+                difference = target - self.Q[env]
+                self.Q[env] += self.alpha * difference
+
                 yield (episode, step, reward)
+
+                env = env_
                 step += 1
 
-    def update(self, env, env_, reward):
-        target = reward + self.gamma * self.Q[env_]
-        difference = target - self.Q[env]
-        self.Q[env] += self.alpha * difference
+    def setup(self, start):
+        raise NotImplementedError()
 
-    def step(self):
+    def explore(self, env):
         raise NotImplementedError()
 
 class Sarsa(Learning):
-    def step(self, env):
-        if not env:
-            assert(env.state == self.start)
-            action = self.Q.select(env.state)
-            env = Environment(env.state, action)
+    def setup(self, start):
+        action = self.Q.select(start)
+        return Environment(start, action)
 
+    def explore(self, env):
         (state_, reward) = self.grid.navigate(*env)
         action_ = self.Q.select(state_)
         env_ = Environment(state_, action_)
 
-        self.update(env, env_, reward)
-
-        return (env_, reward)
+        return (env, reward, env_)
 
 class QLearning(Learning):
-    def step(self, env):
+    def setup(self, start):
+        return Environment(start)
+
+    def explore(self, env):
         action = self.Q.select(env.state)
         env = Environment(env.state, action)
 
@@ -231,6 +236,4 @@ class QLearning(Learning):
         action_ = self.Q.amax(state_)
         env_ = Environment(state_, action_)
 
-        self.update(env, env_, reward)
-
-        return (Environment(state_), reward)
+        return (env, reward, env_)
