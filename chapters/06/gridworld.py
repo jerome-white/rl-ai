@@ -80,11 +80,10 @@ class EpsilonGreedyPolicy(Policy):
 #
 
 class GridWorld:
-    def __init__(self, shape, goal, compass, wind):
+    def __init__(self, shape, goal, compass):
         self.shape = State(*shape)
         self.goal = goal
         self.compass = compass
-        self.wind = wind
 
     def __iter__(self):
         yield from it.starmap(State, it.product(*map(range, self.shape)))
@@ -101,14 +100,29 @@ class GridWorld:
         return all([ 0 <= x < y for (x, y) in zip(state, self.shape) ])
 
     def navigate(self, state, action):
-        for f in (lambda _: action, self.wind.blow):
-            state_ = state + State(*f(state))
-            if self.inbounds(state_):
-                state = state_
+        state_ = state + State(*action)
+        if not self.inbounds(state_):
+            state_ = state
 
-        reward = -int(state != self.goal)
+        return self._navigate(state_, action)
 
-        return (state, reward)
+    def _navigate(self, state, action):
+        raise NotImplementedError()
+
+class WindyGridWorld(GridWorld):
+    def __init__(self, shape, goal, compass, wind):
+        super().__init__(shape, goal, compass)
+        self.wind = wind
+
+    def _navigate(self, state, action):
+        action_ = self.wind.blow(state)
+        state_ = state + State(*action_)
+        if not self.inbounds(state_):
+            state_ = state
+
+        reward = -int(state_ != self.goal)
+
+        return (state_, reward)
 
 #
 #
