@@ -9,7 +9,6 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 import gridworld as gw
-from cliff import Cliff
 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(levelname)s %(message)s',
@@ -28,7 +27,7 @@ def func(incoming, outgoing, args):
 
         logging.info('{} {}'.format(order, experiment))
 
-        grid = Cliff(shape, goal, start)
+        grid = gw.Cliff(shape, goal, start)
         policy = gw.EpsilonGreedyPolicy(grid, args.epsilon)
         process = Learning(grid, start, policy, args.alpha, args.gamma)
 
