@@ -14,3 +14,15 @@ using a value of 0.5:
 ```bash
 $> python example-6.5.py --alpha 0.5
 ```
+
+## Example 6.6
+
+For best results, the experiment needs to be repeated several times;
+fifty to 100, for example (in part to be consistent with
+[ShangtongZhang](https://github.com/ShangtongZhang/reinforcement-learning-an-introduction/blob/35b2bb7d500edc789920c8e1ff5cd4b0edd2e113/chapter06/cliff_walking.py#L172))
+
+```bash
+$> python example-6.5.py --alpha 0.5 --repeat 100
+```
+
+(And, again, it appears alpha should be 0.5, not 0.1.)
