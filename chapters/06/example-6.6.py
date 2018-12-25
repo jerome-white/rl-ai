@@ -2,6 +2,7 @@ import logging
 import functools as ft
 import multiprocessing as mp
 from argparse import ArgumentParser
+from collections import OrderedDict
 
 import pandas as pd
 import seaborn as sns
@@ -38,16 +39,11 @@ def func(incoming, outgoing, args):
             outgoing.put(result)
         outgoing.put(None)
 
-def do(args):
+def do(args, experiments):
     incoming = mp.Queue()
     outgoing = mp.Queue()
 
     with mp.Pool(args.workers, func, (outgoing, incoming, args)):
-        experiments = {
-            'SARSA': gw.Sarsa,
-            'Q-learning': gw.QLearning,
-        }
-
         jobs = 0
         for i in experiments.items():
             for j in range(args.repeat):
@@ -71,18 +67,24 @@ arguments.add_argument('--smoothing', type=int)
 arguments.add_argument('--workers', type=int, default=mp.cpu_count())
 args = arguments.parse_args()
 
-df = pd.DataFrame.from_dict(do(args))
-df = (df
-      .groupby(['order', 'episode', 'experiment'])
+experiments = OrderedDict([
+    ('SARSA', gw.Sarsa),
+    ('Q-learning', gw.QLearning),
+])
+
+df = (pd.DataFrame
+      .from_dict(do(args, experiments))
+      .groupby(['order', 'experiment', 'episode'])
       .sum()
-      .rolling(args.smoothing)
-      .mean()
-      .reset_index())
+      .reset_index()
+)
 
 logging.info('plotting {}'.format(len(df)))
 sns.lineplot(x='episode',
              y='reward',
              hue='experiment',
+             hue_order=experiments.keys(),
+             ci=80,
              data=df)
 plt.ylim((-100, 0))
 plt.grid(True)
