@@ -11,7 +11,14 @@ logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(levelname)s %(message)s',
                     datefmt='%H:%M:%S')
 
-State = cl.namedtuple('State', 'servers, customer')
+_State = cl.namedtuple('State', 'servers, customer')
+
+class State(State_):
+    def __new__(cls, row, column):
+        return super(State, cls).__new__(cls, servers, customer)
+
+    def __bool__(self):
+        return bool(self.servers)
 
 class Server:
     def __init__(self, n, p):
@@ -42,21 +49,55 @@ class Customer:
         return '{} ({})'.format(int(self), float(self))
 
     def __next__(self):
-        priority = random.choices(range(self.n), weights=self.weights).pop()
-        return type(self)(self.n, self.h, priority)
+        priority = random.choices(range(self.n), weights=self.weights)
+        return type(self)(self.n, self.h, priority[0])
+
+def transition(servers, customer):
+    state = None
+
+    for _ in range(2):
+        s = servers() if state is None else max(state.servers - 1, 0)
+        c = next(customer)
+
+        yield State(s, int(c))
 
 arguments = ArgumentParser()
-arguments.add_argument('--servers', type=int, default=10)
-arguments.add_argument('--high-priority', type=float, default=0.5)
-arguments.add_argument('--release-rate', type=float, default=0.06)
+arguments.add_argument('-n', type=int, default=10,
+                       help='Number of servers')
+arguments.add_argument('-h', type=float, default=0.5,
+                       help='Proportion of high priority customers')
+arguments.add_argument('-p', type=float, default=0.06,
+                       help='Probability of a server becoming free')
+arguments.add_argument('--alpha', type=float, default=0.1)
+arguments.add_argument('--beta', type=float, default=0.01)
+arguments.add_argument('--epsilon', type=float, default=0.1)
+arguments.add_argument('--gamma', type=float, default=1)
+arguments.add_argument('--steps', type=int, default=2e6)
 # arguments.add_argument('--workers', type=int, default=mp.cpu_count())
 args = arguments.parse_args()
 
-Q = np.zeros((args.servers, 4, 2))
+servers = Server(args.n, args.p)
+customer = Customer(4, args.h)
 
-servers = Server(args.servers, args.release_rate)
-customer = Customer(4, args.high_priority)
+Q = np.zeros((args.n, 4, 2))
+rho = 0
 
-for i in it.count():
-    s = State(servers(), next(customer))
-    logging.info('{} {} {}'.format(i, s.servers, s.customer))
+for i in range(args.steps):
+    # Establish the state
+    (state, state_) = transition(servers, customer)
+
+    logging.info('{}: {} -> {}'.format(i, state, state_))
+
+    # Choose the action
+    s = Q[state]
+    if np.random.binomial(1, args.epsilon):
+        a = random.randrange(len(s))
+    else:
+        a = np.argwhere(s == np.max(s)).flatten()
+    action = np.random.choice(a)
+
+    # Take the action and observe the reward. (The subsequent state
+    # doesn't depend on the chosen action.)
+    reward = Q[(*state, action)]
+
+logging.critical('rho {}'.format(rho))
