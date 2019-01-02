@@ -13,7 +13,7 @@ logging.basicConfig(level=logging.INFO,
 
 _State = cl.namedtuple('State', 'servers, customer')
 
-class State(State_):
+class State(_State):
     def __new__(cls, row, column):
         return super(State, cls).__new__(cls, servers, customer)
 
@@ -61,6 +61,14 @@ def transition(servers, customer):
 
         yield State(s, int(c))
 
+def choose(state, explore=True):
+    if explore and np.random.binomial(1, args.epsilon):
+        action = random.randrange(len(state))
+    else:
+        action = np.argwhere(state == np.max(state)).flatten()
+
+    return np.random.choice(action)
+
 arguments = ArgumentParser()
 arguments.add_argument('-n', type=int, default=10,
                        help='Number of servers')
@@ -89,15 +97,17 @@ for i in range(args.steps):
     logging.info('{}: {} -> {}'.format(i, state, state_))
 
     # Choose the action
-    s = Q[state]
-    if np.random.binomial(1, args.epsilon):
-        a = random.randrange(len(s))
-    else:
-        a = np.argwhere(s == np.max(s)).flatten()
-    action = np.random.choice(a)
+    action = choose(Q[state])
 
     # Take the action and observe the reward. (The subsequent state
     # doesn't depend on the chosen action.)
-    reward = Q[(*state, action)]
+    reward = 2 ** state.customer if state and action else 0
+
+    action_ = choose(Q[state_], False)
+    target = Q[(*state_, action_)] - Q[(*state, action)]
+    Q[(*state, action)] += self.alpha * (reward - rho + target)
+
+    if Q[(*state, action)] == choose(Q[state], False):
+        rho += args.beta * (reward - rho + target)
 
 logging.critical('rho {}'.format(rho))
