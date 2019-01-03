@@ -11,6 +11,9 @@ logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s %(levelname)s %(message)s',
                     datefmt='%H:%M:%S')
 
+#
+#
+#
 _State = cl.namedtuple('State', 'servers, customer')
 
 class State(_State):
@@ -20,6 +23,12 @@ class State(_State):
     def __bool__(self):
         return bool(self.servers)
 
+    def __str__(self):
+        return ' '.join(map(str, self))
+
+#
+#
+#
 class Server:
     def __init__(self, n, p):
         self.n = n
@@ -52,6 +61,40 @@ class Customer:
         priority = random.choices(range(self.n), weights=self.weights)
         return type(self)(self.n, self.h, priority[0])
 
+#
+#
+#
+class Policy:
+    def __init__(self, servers, customers=4, actions=2):
+        self.q = np.zeros((servers, customers, actions))
+
+    def __getitem__(self, item):
+        index = tuple(map(int, it.chain.from_iterable(item)))
+        return self.q[index]
+
+    def __setitem__(self, key, value):
+        self.q[key] = value
+
+    def choose(self, state, epsilon):
+        if np.random.binomial(1, epsilon):
+            actions = len(self[state])
+            return random.randrange(actions)
+        else:
+            return self.greedy(state)
+
+    def greedy(self, state):
+        logging.debug(state)
+        ptr = self.q[state]
+        action = np.argwhere(ptr == np.max(ptr)).flatten()
+
+        return np.random.choice(action)
+
+    def isgreedy(self, state, action):
+        return self[(state, action)] == self.greedy(state)
+
+#
+#
+#
 def transition(servers, customer):
     state = None
 
@@ -59,55 +102,47 @@ def transition(servers, customer):
         s = servers() if state is None else max(state.servers - 1, 0)
         c = next(customer)
 
-        yield State(s, int(c))
+        yield State(s, c)
 
-def choose(state, explore=True):
-    if explore and np.random.binomial(1, args.epsilon):
-        action = random.randrange(len(state))
-    else:
-        action = np.argwhere(state == np.max(state)).flatten()
-
-    return np.random.choice(action)
-
+#
+#
+#
 arguments = ArgumentParser()
-arguments.add_argument('-n', type=int, default=10,
-                       help='Number of servers')
-arguments.add_argument('-h', type=float, default=0.5,
-                       help='Proportion of high priority customers')
-arguments.add_argument('-p', type=float, default=0.06,
-                       help='Probability of a server becoming free')
+arguments.add_argument('--servers', type=int, default=10)
+arguments.add_argument('--high-priority', type=float, default=0.5)
+arguments.add_argument('--p-free', type=float, default=0.06)
 arguments.add_argument('--alpha', type=float, default=0.1)
 arguments.add_argument('--beta', type=float, default=0.01)
 arguments.add_argument('--epsilon', type=float, default=0.1)
-arguments.add_argument('--gamma', type=float, default=1)
-arguments.add_argument('--steps', type=int, default=2e6)
+arguments.add_argument('--steps', type=int, default=int(2e6))
 # arguments.add_argument('--workers', type=int, default=mp.cpu_count())
 args = arguments.parse_args()
 
-servers = Server(args.n, args.p)
-customer = Customer(4, args.h)
+_customers = 4
+servers = Server(args.servers, args.p_free)
+customer = Customer(_customers, args.high_priority)
 
-Q = np.zeros((args.n, 4, 2))
+Q = Policy(args.servers)
 rho = 0
 
 for i in range(args.steps):
     # Establish the state
     (state, state_) = transition(servers, customer)
-
+    print(type(state_.customer.priority))
     logging.info('{}: {} -> {}'.format(i, state, state_))
 
     # Choose the action
-    action = choose(Q[state])
+    action = Q.choose(state, args.epsilon)
 
     # Take the action and observe the reward. (The subsequent state
     # doesn't depend on the chosen action.)
-    reward = 2 ** state.customer if state and action else 0
+    reward = float(state.customer) if state and action else 0
 
-    action_ = choose(Q[state_], False)
-    target = Q[(*state_, action_)] - Q[(*state, action)]
-    Q[(*state, action)] += self.alpha * (reward - rho + target)
+    action_ = Q.greedy(state_)
+    target = Q[(state_, action_)] - Q[(state, action)]
+    Q[(state, action)] += self.alpha * (reward - rho + target)
 
-    if Q[(*state, action)] == choose(Q[state], False):
+    if Q.isgreedy(state, action):
         rho += args.beta * (reward - rho + target)
 
 logging.critical('rho {}'.format(rho))
