@@ -60,10 +60,9 @@ class Server:
 class Customer:
     def __init__(self, n, h):
         self.n = n
-        self.h = h
 
         low = self.n - 1
-        self.weights = [ self.h / low ] * low + [ self.h ]
+        self.weights = [ h / low ] * low + [ h ]
 
     def __next__(self):
         return random.choices(range(self.n), weights=self.weights).pop()
