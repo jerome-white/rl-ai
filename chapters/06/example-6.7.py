@@ -1,7 +1,5 @@
-import math
 import random
 import logging
-import itertools as it
 import collections as cl
 from argparse import ArgumentParser
 
@@ -14,14 +12,36 @@ logging.basicConfig(level=logging.DEBUG,
 #
 #
 #
+def flatten(lst):
+    for i in [ lst ]:
+        try:
+            for j in i:
+                yield from flatten(j)
+        except TypeError:
+            yield i
+
+def transition(servers, customer):
+    state = None
+
+    for _ in range(2):
+        s = servers() if state is None else max(state.servers - 1, 0)
+        c = next(customer)
+
+        yield State(s, c)
+#
+#
+#
 _State = cl.namedtuple('State', 'servers, customer')
 
 class State(_State):
-    def __new__(cls, row, column):
+    def __new__(cls, servers, customer):
         return super(State, cls).__new__(cls, servers, customer)
 
     def __bool__(self):
         return bool(self.servers)
+
+    def __float__(self):
+        return math.pow(2, self.customer)
 
     def __str__(self):
         return ' '.join(map(str, self))
@@ -38,28 +58,15 @@ class Server:
         return sum([ np.random.binomial(1, self.p) for _ in range(self.n) ])
 
 class Customer:
-    def __init__(self, n, h, priority=None):
+    def __init__(self, n, h):
         self.n = n
         self.h = h
-        self.priority = priority
 
         low = self.n - 1
         self.weights = [ self.h / low ] * low + [ self.h ]
 
-    def __float__(self):
-        return math.pow(2, int(self.priority))
-
-    def __int__(self):
-        if self.priority is None:
-            raise AttributeError()
-        return self.priority
-
-    def __str__(self):
-        return '{} ({})'.format(int(self), float(self))
-
     def __next__(self):
-        priority = random.choices(range(self.n), weights=self.weights)
-        return type(self)(self.n, self.h, priority[0])
+        return random.choices(range(self.n), weights=self.weights).pop()
 
 #
 #
@@ -69,8 +76,7 @@ class Policy:
         self.q = np.zeros((servers, customers, actions))
 
     def __getitem__(self, item):
-        index = tuple(map(int, it.chain.from_iterable(item)))
-        return self.q[index]
+        return self.q[tuple(flatten(item))]
 
     def __setitem__(self, key, value):
         self.q[key] = value
@@ -83,7 +89,6 @@ class Policy:
             return self.greedy(state)
 
     def greedy(self, state):
-        logging.debug(state)
         ptr = self.q[state]
         action = np.argwhere(ptr == np.max(ptr)).flatten()
 
@@ -91,18 +96,6 @@ class Policy:
 
     def isgreedy(self, state, action):
         return self[(state, action)] == self.greedy(state)
-
-#
-#
-#
-def transition(servers, customer):
-    state = None
-
-    for _ in range(2):
-        s = servers() if state is None else max(state.servers - 1, 0)
-        c = next(customer)
-
-        yield State(s, c)
 
 #
 #
@@ -128,7 +121,6 @@ rho = 0
 for i in range(args.steps):
     # Establish the state
     (state, state_) = transition(servers, customer)
-    print(type(state_.customer.priority))
     logging.info('{}: {} -> {}'.format(i, state, state_))
 
     # Choose the action
@@ -136,11 +128,11 @@ for i in range(args.steps):
 
     # Take the action and observe the reward. (The subsequent state
     # doesn't depend on the chosen action.)
-    reward = float(state.customer) if state and action else 0
+    reward = float(state) if state and action else 0
 
     action_ = Q.greedy(state_)
     target = Q[(state_, action_)] - Q[(state, action)]
-    Q[(state, action)] += self.alpha * (reward - rho + target)
+    Q[(state, action)] += args.alpha * (reward - rho + target)
 
     if Q.isgreedy(state, action):
         rho += args.beta * (reward - rho + target)
