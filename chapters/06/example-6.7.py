@@ -1,3 +1,4 @@
+import math
 import random
 import logging
 import collections as cl
@@ -20,14 +21,6 @@ def flatten(lst):
         except TypeError:
             yield i
 
-def transition(servers, customer):
-    state = None
-
-    for _ in range(2):
-        s = servers() if state is None else max(state.servers - 1, 0)
-        c = next(customer)
-
-        yield State(s, c)
 #
 #
 #
@@ -96,6 +89,18 @@ class Policy:
     def isgreedy(self, state, action):
         return self[(state, action)] == self.greedy(state)
 
+class System:
+    def __init__(self, servers, customer):
+        self.servers = servers
+        self.customer = customer
+        self.previous = None
+
+    def step(self, action=None):
+        s = self.servers() if action is None else max(self.previous - 1, 0)
+        self.previous = s
+
+        return State(s, next(self.customer))
+
 #
 #
 #
@@ -107,33 +112,31 @@ arguments.add_argument('--alpha', type=float, default=0.1)
 arguments.add_argument('--beta', type=float, default=0.01)
 arguments.add_argument('--epsilon', type=float, default=0.1)
 arguments.add_argument('--steps', type=int, default=int(2e6))
-# arguments.add_argument('--workers', type=int, default=mp.cpu_count())
 args = arguments.parse_args()
 
-_customers = 4
 servers = Server(args.servers, args.p_free)
-customer = Customer(_customers, args.high_priority)
+customer = Customer(4, args.high_priority)
+system = System(servers, customer)
 
 Q = Policy(args.servers)
 rho = 0
 
+state = system.step()
 for i in range(args.steps):
-    # Establish the state
-    (state, state_) = transition(servers, customer)
-    logging.info('{}: {} -> {}'.format(i, state, state_))
-
-    # Choose the action
     action = Q.choose(state, args.epsilon)
-
-    # Take the action and observe the reward. (The subsequent state
-    # doesn't depend on the chosen action.)
     reward = float(state) if state and action else 0
+    state_ = system.step(action)
+
+    logging.info('{}: {} -> {}'.format(i, state, state_))
 
     action_ = Q.greedy(state_)
     target = Q[(state_, action_)] - Q[(state, action)]
     Q[(state, action)] += args.alpha * (reward - rho + target)
 
     if Q.isgreedy(state, action):
+        logging.debug('updating rho')
         rho += args.beta * (reward - rho + target)
+
+    state = state_
 
 logging.critical('rho {}'.format(rho))
