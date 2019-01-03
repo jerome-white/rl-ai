@@ -7,7 +7,7 @@ from argparse import ArgumentParser
 
 import numpy as np
 
-logging.basicConfig(level=logging.INFO,
+logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s %(levelname)s %(message)s',
                     datefmt='%H:%M:%S')
 
