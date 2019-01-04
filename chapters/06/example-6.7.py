@@ -131,7 +131,7 @@ class System:
         self.servers.allocate()
         if action is not None:
             self.servers.engage(action)
-        free = max(servers() - 1, 0)
+        free = max(self.servers() - 1, 0)
 
         return State(free, next(self.customer))
 
