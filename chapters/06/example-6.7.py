@@ -37,7 +37,7 @@ class State(_State):
         return math.pow(2, self.customer)
 
     def __str__(self):
-        return ' '.join(map(str, self))
+        return 's:{0} c:{1}'.format(*self)
 
 #
 #
@@ -150,7 +150,7 @@ for i in range(args.steps):
     action = Q.choose(state, args.epsilon)
     (state_, reward) = system.step(action)
 
-    logging.info('{}: {} -({} {})-> {}'
+    logging.info('{}: {} -[a:{} r:{}]-> {}'
                  .format(i, state, action, reward, state_))
 
     action_ = Q.greedy(state_)
