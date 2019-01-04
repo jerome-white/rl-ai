@@ -54,12 +54,14 @@ class Servers:
         return len(self.status)
 
     def engage(self, action):
+        i = 0
         for _ in range(action):
             try:
-                i = self.status.index(self.free)
+                i = self.status.index(self.free, i)
+                self.status[i] = self.busy
+                i += 1
             except ValueError:
                 break
-            self.status[i] = self.busy
 
     def available(self):
         for i in range(len(self.status)):
