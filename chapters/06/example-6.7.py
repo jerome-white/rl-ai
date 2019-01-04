@@ -42,13 +42,16 @@ class State(_State):
 #
 #
 #
-class ServerPool:
+class Servers:
     def __init__(self, n, p):
         self.p = p
 
         self.free = True
         self.busy = not self.free
         self.status = [ self.free ] * n
+
+    def __len__(self):
+        return len(self.status)
 
     def engage(self, action):
         for _ in range(action):
@@ -65,21 +68,24 @@ class ServerPool:
 
         return sum(self.status)
 
-class Customer:
+class Customers:
     def __init__(self, n, h):
         self.n = n
 
         low = self.n - 1
         self.weights = [ h / low ] * low + [ h ]
 
+    def __len__(self):
+        return self.n
+
     def __next__(self):
-        return random.choices(range(self.n), weights=self.weights).pop()
+        return random.choices(range(len(self)), weights=self.weights).pop()
 
 #
 #
 #
 class Policy:
-    def __init__(self, servers, customers=4, actions=2):
+    def __init__(self, servers, customers, actions=2):
         self.q = np.zeros((servers, customers, actions))
 
     def __getitem__(self, item):
@@ -129,7 +135,6 @@ class System:
 #
 #
 arguments = ArgumentParser()
-arguments.add_argument('--servers', type=int, default=10)
 arguments.add_argument('--high-priority', type=float, default=0.5)
 arguments.add_argument('--p-free', type=float, default=0.06)
 arguments.add_argument('--alpha', type=float, default=0.1)
@@ -138,11 +143,11 @@ arguments.add_argument('--epsilon', type=float, default=0.1)
 arguments.add_argument('--steps', type=int, default=int(2e6))
 args = arguments.parse_args()
 
-servers = ServerPool(args.servers, args.p_free)
-customer = Customer(4, args.high_priority)
-system = System(servers, customer)
+servers = Servers(10, args.p_free)
+customers = Customers(4, args.high_priority)
+system = System(servers, customers)
 
-Q = Policy(args.servers)
+Q = Policy(len(servers), len(customers))
 rho = 0
 
 (state, _) = system.step()
