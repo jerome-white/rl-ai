@@ -106,7 +106,7 @@ class Policy:
         return decision
 
     def greedy(self, state):
-        ptr = self.q[state]
+        ptr = self[state]
         action = np.argwhere(ptr == np.max(ptr)).flatten()
 
         return np.random.choice(action)
