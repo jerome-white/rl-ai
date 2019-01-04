@@ -146,7 +146,8 @@ for i in range(args.steps):
     reward = float(state) if action else 0
     state_ = system.step(action)
 
-    logging.info('{}: {} -> {}'.format(i, state, state_))
+    logging.info('{}: {} -({} {})-> {}'
+                 .format(i, state, action, reward, state_))
 
     action_ = Q.greedy(state_)
     target = Q[(state_, action_)] - Q[(state, action)]
