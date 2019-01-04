@@ -42,13 +42,28 @@ class State(_State):
 #
 #
 #
-class Server:
+class ServerPool:
     def __init__(self, n, p):
-        self.n = n
         self.p = p
 
-    def __call__(self):
-        return sum([ np.random.binomial(1, self.p) for _ in range(self.n) ])
+        self.free = False
+        self.busy = not self.free
+        self.status = [ self.free ] * n
+
+    def engage(self, action):
+        for _ in range(action):
+            try:
+                i = self.status.index(self.busy)
+            except ValueError:
+                break
+            self.status[i] = self.free
+
+    def available(self):
+        for i in range(len(self.status)):
+            if self.status[i] == self.busy:
+                self.status[i] = bool(np.random.binomial(1, self.p))
+
+        return sum(self.status)
 
 class Customer:
     def __init__(self, n, h):
@@ -96,10 +111,10 @@ class System:
         self.previous = None
 
     def step(self, action=None):
-        s = self.servers() if action is None else max(self.previous - 1, 0)
-        self.previous = s
+        if action is not None:
+            self.servers.engage(action)
 
-        return State(s, next(self.customer))
+        return State(self.servers.available(), next(self.customer))
 
 #
 #
@@ -114,7 +129,7 @@ arguments.add_argument('--epsilon', type=float, default=0.1)
 arguments.add_argument('--steps', type=int, default=int(2e6))
 args = arguments.parse_args()
 
-servers = Server(args.servers, args.p_free)
+servers = ServerPool(args.servers, args.p_free)
 customer = Customer(4, args.high_priority)
 system = System(servers, customer)
 
