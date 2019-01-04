@@ -65,8 +65,8 @@ class Servers:
 
     def available(self):
         for i in range(len(self.status)):
-            if self.status[i] == self.busy:
-                self.status[i] = bool(np.random.binomial(1, self.p))
+            if self.status[i] == self.busy and random.random() <= self.p:
+                self.status[i] = self.free
 
         return sum(self.status)
 
