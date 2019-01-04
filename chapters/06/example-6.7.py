@@ -46,8 +46,8 @@ class ServerPool:
     def __init__(self, n, p):
         self.p = p
 
-        self.free = False
-        self.busy = not self.free
+        self.busy = True
+        self.free = not self.busy
         self.status = [ self.free ] * n
 
     def engage(self, action):
