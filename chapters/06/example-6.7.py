@@ -75,7 +75,7 @@ class Customers:
         self.n = n
 
         low = self.n - 1
-        self.weights = [ h / low ] * low + [ h ]
+        self.weights = [ (1 - h) / low ] * low + [ h ]
 
     def __len__(self):
         return self.n
