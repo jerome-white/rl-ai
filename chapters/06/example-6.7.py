@@ -163,8 +163,8 @@ for i in range(args.steps):
     Q[(state, action)] += args.alpha * (reward - rho + target)
 
     if Q.isgreedy(state, action):
-        logging.debug('updating rho')
         rho += args.beta * (reward - rho + target)
+        logging.debug('updated rho: {}'.format(rho))
 
     state = state_
 
