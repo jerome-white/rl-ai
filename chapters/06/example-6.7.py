@@ -89,7 +89,9 @@ class Policy:
         self.q[key] = value
 
     def choose(self, state, epsilon):
-        if np.random.binomial(1, epsilon):
+        if not state:
+            decision = 0
+        elif np.random.binomial(1, epsilon):
             actions = len(self[state])
             decision = random.randrange(actions)
         else:
@@ -141,7 +143,7 @@ rho = 0
 state = system.step()
 for i in range(args.steps):
     action = Q.choose(state, args.epsilon)
-    reward = float(state) if state and action else 0
+    reward = float(state) if action else 0
     state_ = system.step(action)
 
     logging.info('{}: {} -> {}'.format(i, state, state_))
