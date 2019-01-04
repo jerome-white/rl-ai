@@ -91,9 +91,11 @@ class Policy:
     def choose(self, state, epsilon):
         if np.random.binomial(1, epsilon):
             actions = len(self[state])
-            return random.randrange(actions)
+            decision = random.randrange(actions)
         else:
-            return self.greedy(state)
+            decision = self.greedy(state)
+
+        return decision
 
     def greedy(self, state):
         ptr = self.q[state]
@@ -108,7 +110,6 @@ class System:
     def __init__(self, servers, customer):
         self.servers = servers
         self.customer = customer
-        self.previous = None
 
     def step(self, action=None):
         if action is not None:
