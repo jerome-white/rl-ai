@@ -45,7 +45,6 @@ class State(_State):
 class Servers:
     def __init__(self, n, p):
         self.p = p
-
         self.free = True
         self.busy = not self.free
         self.status = [ self.free ] * n
@@ -68,7 +67,6 @@ class Servers:
 
     def allocate(self):
         freed = 0
-
         for i in range(len(self)):
             if self.status[i] == self.busy and random.random() <= self.p:
                 self.status[i] = self.free
@@ -79,7 +77,6 @@ class Servers:
 class Customers:
     def __init__(self, n, h):
         self.n = n
-
         low = self.n - 1
         self.weights = [ (1 - h) / low ] * low + [ h ]
 
@@ -129,7 +126,7 @@ class System:
 
     def step(self, action=None):
         self.servers.allocate()
-        if action is not None:
+        if action:
             self.servers.engage(action)
         free = max(self.servers() - 1, 0)
 
