@@ -125,13 +125,8 @@ class System:
         if action is not None:
             self.servers.engage(action)
         free = max(self.servers.available() - 1, 0)
-        state = State(free, next(self.customer))
 
-        # The reward is the value of the state if the action is
-        # specified (not None) and is to accept (non-zero).
-        reward = float(state) if action else action
-
-        return (state, reward)
+        return State(free, next(self.customer))
 
 #
 #
@@ -152,10 +147,11 @@ system = System(servers, customers)
 Q = Policy(len(servers), len(customers))
 rho = 0
 
-(state, _) = system.step()
+state = system.step()
 for i in range(args.steps):
     action = Q.choose(state, args.epsilon)
-    (state_, reward) = system.step(action)
+    reward = float(state) if action else 0
+    state_ = system.step(action)
 
     logging.info('{}: {} -[a:{} r:{}]-> {}'
                  .format(i, state, action, reward, state_))
