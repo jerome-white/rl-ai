@@ -46,17 +46,17 @@ class ServerPool:
     def __init__(self, n, p):
         self.p = p
 
-        self.busy = True
-        self.free = not self.busy
+        self.free = True
+        self.busy = not self.free
         self.status = [ self.free ] * n
 
     def engage(self, action):
         for _ in range(action):
             try:
-                i = self.status.index(self.busy)
+                i = self.status.index(self.free)
             except ValueError:
                 break
-            self.status[i] = self.free
+            self.status[i] = self.busy
 
     def available(self):
         for i in range(len(self.status)):
@@ -114,8 +114,9 @@ class System:
     def step(self, action=None):
         if action is not None:
             self.servers.engage(action)
+        free = max(self.servers.available() - 1, 0)
 
-        return State(self.servers.available(), next(self.customer))
+        return State(free, next(self.customer))
 
 #
 #
