@@ -50,6 +50,9 @@ class Servers:
         self.busy = not self.free
         self.status = [ self.free ] * n
 
+    def __call__(self):
+        return sum(self.status)
+
     def __len__(self):
         return len(self.status)
 
@@ -63,12 +66,15 @@ class Servers:
             except ValueError:
                 break
 
-    def available(self):
-        for i in range(len(self.status)):
+    def allocate(self):
+        freed = 0
+
+        for i in range(len(self)):
             if self.status[i] == self.busy and random.random() <= self.p:
                 self.status[i] = self.free
+                freed += 1
 
-        return sum(self.status)
+        return freed
 
 class Customers:
     def __init__(self, n, h):
@@ -122,9 +128,10 @@ class System:
         self.customer = customer
 
     def step(self, action=None):
+        self.servers.allocate()
         if action is not None:
             self.servers.engage(action)
-        free = max(self.servers.available() - 1, 0)
+        free = max(servers() - 1, 0)
 
         return State(free, next(self.customer))
 
