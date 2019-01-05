@@ -1,4 +1,3 @@
-import math
 import random
 import logging
 import collections as cl
@@ -33,8 +32,8 @@ class State(_State):
     def __bool__(self):
         return bool(self.servers)
 
-    def __float__(self):
-        return math.pow(2, self.customer)
+    def __int__(self):
+        return 2 ** self.customer
 
     def __str__(self):
         return 's:{0} c:{1}'.format(*self)
@@ -154,7 +153,7 @@ rho = 0
 state = system.step()
 for i in range(args.steps):
     action = Q.choose(state, args.epsilon)
-    reward = float(state) if action else 0
+    reward = int(state) if action else 0
     state_ = system.step(action)
 
     logging.info('{}: {} -[a:{} r:{}]-> {}'
