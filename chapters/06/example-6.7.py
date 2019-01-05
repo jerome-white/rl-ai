@@ -46,7 +46,7 @@ class Servers:
         self.p = p
         self.free = True
         self.busy = not self.free
-        self.status = [ self.free ] * n
+        self.status = [ self.free ] * (n + 1)
 
     def __call__(self):
         return sum(self.status)
