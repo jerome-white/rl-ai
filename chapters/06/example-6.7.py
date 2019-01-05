@@ -4,6 +4,9 @@ import collections as cl
 from argparse import ArgumentParser
 
 import numpy as np
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s %(levelname)s %(message)s',
@@ -180,3 +183,34 @@ for i in range(args.steps):
     state = state_
 
 logging.critical('rho {}'.format(rho))
+
+#
+# Priority versus number of free servers (Figure 6.17, top)
+#
+df = Q.toframe(np.argmax)
+df = df[df['servers'] > 0].pivot(index='priority',
+                                 columns='servers',
+                                 values='value')
+sns.heatmap(df, vmin=0, vmax=1, cmap='BrBG')
+plt.savefig('figure-6.17a.png')
+
+plt.clf()
+
+#
+# Value of the best action versus number of free servers (Figure 6.17,
+# bottom)
+#
+df = Q.toframe(np.max)
+
+# sns.lineplot(x='servers',
+#              y='value',
+#              hue='priority',
+#              data=df)
+
+for (i, g) in df.groupby('priority'):
+    plt.plot(g['servers'], g['value'], label=i)
+plt.legend(title='priority')
+plt.grid(True)
+plt.xlabel('Number of free servers')
+plt.ylabel('Value of best action')
+plt.savefig('figure-6.17b.png')
