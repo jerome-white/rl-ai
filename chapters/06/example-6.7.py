@@ -187,14 +187,14 @@ print('rho {}'.format(rho))
 #
 # Priority versus number of free servers (Figure 6.17, top)
 #
-title = '$\\rho$: {}'.format(round(rho, 2))
+title = '$\\rho \\approx${}'.format(round(rho, 2))
 
 df = Q.toframe(np.argmax)
 df = df[df['servers'] > 0].pivot(index='priority',
                                  columns='servers',
                                  values='value')
 sns.heatmap(df, vmin=0, vmax=1, cmap='BrBG')
-plt.title(title)
+plt.title('Policy ({})'.format(title))
 plt.savefig('figure-6.17a.png')
 
 plt.clf()
@@ -216,5 +216,5 @@ plt.legend(title='Priority')
 plt.grid(True)
 plt.xlabel('Number of free servers')
 plt.ylabel('Value of best action')
-plt.title(title)
+plt.title('Value Function ({})'.format(title))
 plt.savefig('figure-6.17b.png')
