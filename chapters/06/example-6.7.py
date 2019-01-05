@@ -98,6 +98,15 @@ class Policy:
     def __setitem__(self, key, value):
         self.q[key] = value
 
+    def greedy(self, state):
+        ptr = self[state]
+        action = np.argwhere(ptr == np.max(ptr)).flatten()
+
+        return np.random.choice(action)
+
+    def isgreedy(self, state, action):
+        return self[(state, action)] == self.greedy(state)
+
     def choose(self, state, epsilon):
         if not state:
             decision = 0
@@ -109,14 +118,15 @@ class Policy:
 
         return decision
 
-    def greedy(self, state):
-        ptr = self[state]
-        action = np.argwhere(ptr == np.max(ptr)).flatten()
+    def toarray(self, f):
+        for (i, row) in enumerate(self.q):
+            for (j, cell) in enumerate(row):
+                s = State(i, j)
+                yield (s.servers, int(s), f(cell))
 
-        return np.random.choice(action)
-
-    def isgreedy(self, state, action):
-        return self[(state, action)] == self.greedy(state)
+    def toframe(self, f):
+        columns=('servers', 'priority', 'value')
+        return pd.DataFrame(self.toarray(f), columns=columns)
 
 class System:
     def __init__(self, servers, customer):
