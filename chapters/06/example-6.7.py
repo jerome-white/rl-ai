@@ -212,9 +212,10 @@ df = Q.toframe(np.max)
 
 for (i, g) in df.groupby('priority'):
     plt.plot(g['servers'], g['value'], label=i)
-plt.legend(title='Priority')
 plt.grid(True)
+plt.title('Value Function ({})'.format(title))
+plt.legend(title='Priority')
+plt.xticks(range(len(servers)))
 plt.xlabel('Number of free servers')
 plt.ylabel('Value of best action')
-plt.title('Value Function ({})'.format(title))
 plt.savefig('figure-6.17b.png')
