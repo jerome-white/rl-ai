@@ -212,7 +212,7 @@ df = Q.toframe(np.max)
 
 for (i, g) in df.groupby('priority'):
     plt.plot(g['servers'], g['value'], label=i)
-plt.legend(title='priority')
+plt.legend(title='Priority')
 plt.grid(True)
 plt.xlabel('Number of free servers')
 plt.ylabel('Value of best action')
