@@ -49,7 +49,7 @@ class Servers:
         self.p = p
         self.free = True
         self.busy = not self.free
-        self.status = [ self.free ] * (n + 1)
+        self.status = [ self.free ] * n
 
     def __call__(self):
         return sum(self.status)
@@ -93,7 +93,7 @@ class Customers:
 #
 class Policy:
     def __init__(self, servers, customers, actions=2):
-        self.q = np.zeros((servers, customers, actions))
+        self.q = np.zeros((servers + 1, customers, actions))
 
     def __getitem__(self, item):
         return self.q[tuple(flatten(item))]
@@ -140,9 +140,8 @@ class System:
         self.servers.allocate()
         if action:
             self.servers.engage(action)
-        free = max(self.servers() - 1, 0)
 
-        return State(free, next(self.customer))
+        return State(self.servers(), next(self.customer))
 
 #
 #
