@@ -112,14 +112,13 @@ class Policy:
 
     def choose(self, state, epsilon):
         if not state:
-            decision = 0
+            action = 0
         elif np.random.binomial(1, epsilon):
-            actions = len(self[state])
-            decision = random.randrange(actions)
+            action = random.randrange(len(self[state]))
         else:
-            decision = self.greedy(state)
+            action = self.greedy(state)
 
-        return decision
+        return action
 
     def toarray(self, f):
         for (i, row) in enumerate(self.q):
