@@ -138,13 +138,19 @@ class System:
     def __init__(self, servers, customer):
         self.servers = servers
         self.customer = customer
+        self.state = None
 
     def step(self, action=None):
         self.servers.allocate()
+
+        reward = 0
         if action:
             self.servers.engage(action)
+            if self.state:
+                reward = int(self.state)
+        self.state = State(self.servers(), next(self.customer))
 
-        return State(self.servers(), next(self.customer))
+        return (reward, self.state)
 
 #
 #
@@ -165,11 +171,10 @@ system = System(servers, customers)
 Q = Policy(len(servers), len(customers))
 rho = 0
 
-state = system.step()
+(_, state) = system.step()
 for i in range(args.steps):
     action = Q.choose(state, args.epsilon)
-    reward = int(state) if action else 0
-    state_ = system.step(action)
+    (reward, state_) = system.step(action)
 
     logging.info('{}: {} -[a:{} r:{}]-> {}'
                  .format(i, state, action, reward, state_))
