@@ -110,7 +110,8 @@ class Policy:
         return np.random.choice(action)
 
     def isgreedy(self, state, action):
-        return self[(state, action)] == self.greedy(state)
+        action_ = self.greedy(state)
+        return self[(state, action)] == self[(state, action_)]
 
     def choose(self, state, epsilon):
         if not state:
