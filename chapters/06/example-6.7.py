@@ -93,11 +93,14 @@ class Customers:
 class Policy:
     def __init__(self, servers, customers, actions=2):
         self.q = np.zeros((servers + 1, customers, actions))
+        # self.accounting = cl.Counter()
 
     def __getitem__(self, item):
         return self.q[tuple(flatten(item))]
 
     def __setitem__(self, key, value):
+        key = tuple(flatten(key))
+        # self.accounting[key] += 1
         self.q[key] = value
 
     def greedy(self, state):
