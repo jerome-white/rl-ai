@@ -104,6 +104,9 @@ class Policy:
         self.q[key] = value
 
     def greedy(self, state):
+        if not state:
+            return 0
+
         ptr = self[state]
         action = np.argwhere(ptr == np.max(ptr)).flatten()
 
@@ -114,9 +117,7 @@ class Policy:
         return self[(state, action)] == self[(state, action_)]
 
     def choose(self, state, epsilon):
-        if not state:
-            action = 0
-        elif np.random.binomial(1, epsilon):
+        if state and np.random.binomial(1, epsilon):
             action = random.randrange(len(self[state]))
         else:
             action = self.greedy(state)
