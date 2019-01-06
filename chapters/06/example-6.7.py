@@ -194,7 +194,7 @@ df = Q.toframe(np.argmax)
 df = df[df['servers'] > 0].pivot(index='priority',
                                  columns='servers',
                                  values='value')
-sns.heatmap(df, vmin=0, vmax=1, cmap='BrBG')
+sns.heatmap(df, vmin=0, vmax=1, square=True, cmap='RdBu_r', cbar=False)
 plt.title('Policy ({})'.format(title))
 plt.savefig('figure-6.17a.png')
 
