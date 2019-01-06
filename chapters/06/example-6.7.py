@@ -215,7 +215,7 @@ for (i, g) in df.groupby('priority'):
 plt.grid(True)
 plt.title('Value Function ({})'.format(title))
 plt.legend(title='Priority')
-plt.xticks(range(len(servers)))
+plt.xticks(np.sort(df['servers'].unique()))
 plt.xlabel('Number of free servers')
 plt.ylabel('Value of best action')
 plt.savefig('figure-6.17b.png')
