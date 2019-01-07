@@ -41,7 +41,6 @@ class Servers:
     def __init__(self, n, p):
         self.p = p
         self.free = True
-        self.busy = not self.free
         self.status = [ self.free ] * n
 
     def __call__(self):
@@ -55,19 +54,14 @@ class Servers:
         for _ in range(action):
             try:
                 i = self.status.index(self.free, i)
-                self.status[i] = self.busy
+                self.status[i] = not self.free
                 i += 1
             except ValueError:
                 break
 
     def allocate(self):
-        freed = 0
         for i in range(len(self)):
-            if self.status[i] == self.busy and random.random() <= self.p:
-                self.status[i] = self.free
-                freed += 1
-
-        return freed
+            self.status[i] |= random.random() < self.p
 
 class Customers:
     def __init__(self, n, h):
