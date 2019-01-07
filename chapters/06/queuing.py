@@ -67,12 +67,13 @@ class Customers:
     def __init__(self, n, h):
         low = n - 1
         self.weights = [ (1 - h) / low ] * low + [ h ]
+        assert(sum(self.weights) == 1)
 
     def __len__(self):
         return len(self.weights)
 
     def __next__(self):
-        return random.choices(range(len(self)), weights=self.weights).pop()
+        return np.random.choice(len(self), p=self.weights)
 
 #
 #
