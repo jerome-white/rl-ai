@@ -180,11 +180,12 @@ for i in range(args.steps):
                  .format(i, state, action, reward, state_))
 
     action_ = Q.greedy(state_)
-    target = reward - rho + Q[(state_, action_)] - Q[(state, action)]
-    Q[(state, action)] += args.alpha * target
+    update = reward - rho + Q[(state_, action_)]
+    Q[(state, action)] += args.alpha * (update - Q[(state, action)])
 
-    if Q.isgreedy(state, action):
-        rho += args.beta * target
+    action_ = Q.greedy(state)
+    if Q[(state, action)] == Q[(state, action_)]:
+        rho += args.beta * (update - Q[(state, action_)])
         logging.debug('updated rho: {}'.format(rho))
 
     state = state_
