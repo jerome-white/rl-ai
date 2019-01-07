@@ -112,10 +112,6 @@ class Policy:
 
         return np.random.choice(action)
 
-    def isgreedy(self, state, action):
-        action_ = self.greedy(state)
-        return self[(state, action)] == self[(state, action_)]
-
     def choose(self, state, epsilon):
         if state and np.random.binomial(1, epsilon):
             action = random.randrange(len(self[state]))
