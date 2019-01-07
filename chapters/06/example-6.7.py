@@ -172,12 +172,16 @@ for i in range(args.steps):
     action = Q.choose(state, args.epsilon)
     (reward, state_) = system.step(action)
 
-    logging.info('{}: {} -[a:{} r:{}]-> {}'
-                 .format(i, state, action, reward, state_))
-
     action_ = Q.greedy(state_)
     update = reward - rho + Q[(state_, action_)]
     Q[(state, action)] += args.alpha * (update - Q[(state, action)])
+
+    logging.info('{}: {} -[a:{} r:{} ()]-> {}'.format(i,
+                                                      state,
+                                                      action,
+                                                      reward,
+                                                      Q[(state, action)],
+                                                      state_))
 
     action_ = Q.greedy(state)
     if Q[(state, action)] == Q[(state, action_)]:
