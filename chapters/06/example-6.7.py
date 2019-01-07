@@ -35,7 +35,7 @@ for i in range(args.steps):
     action = Q.choose(state, args.epsilon)
     (reward, state_) = system.step(action)
 
-    action_ = Q.greedy(state_)
+    action_ = Q.choose(state_)
     update = reward - rho + Q[(state_, action_)]
     Q[(state, action)] += args.alpha * (update - Q[(state, action)])
 
@@ -47,7 +47,7 @@ for i in range(args.steps):
                          round(Q[(state, action)], 5),
                          state_))
 
-    action_ = Q.greedy(state)
+    action_ = Q.choose(state)
     if Q[(state, action)] == Q[(state, action_)]:
         rho += args.beta * (update - Q[(state, action_)])
         logging.debug('updated rho: {}'.format(rho))

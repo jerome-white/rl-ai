@@ -109,19 +109,16 @@ class Policy:
             raise AttributeError()
         return all(self.accounting.values())
 
-    def greedy(self, state):
-        ptr = self[state]
-        action = np.argwhere(ptr == np.max(ptr)).flatten()
-
-        return np.random.choice(action)
-
-    def choose(self, state, epsilon):
+    def choose(self, state, epsilon=0):
         if not state:
             action = 0
         elif np.random.binomial(1, epsilon):
             action = random.randrange(len(self[state]))
         else:
-            action = self.greedy(state)
+            ptr = self[state]
+            index = np.argwhere(ptr == np.max(ptr)).flatten()
+            action = np.random.choice(index)
+        assert(0 <= action <= 1)
 
         return action
 
