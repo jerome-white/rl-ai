@@ -1,4 +1,5 @@
 import random
+import itertools as it
 import collections as cl
 
 import numpy as np
@@ -83,17 +84,30 @@ class Customers:
 #
 #
 class Policy:
-    def __init__(self, servers, customers, actions=2):
-        self.q = np.zeros((servers + 1, customers, actions))
-        # self.accounting = cl.Counter()
+    def __init__(self, servers, customers, actions=2, accounting=False):
+        shape = (servers + 1, customers, actions)
+        self.q = np.zeros(shape)
+
+        self.accounting = {}
+        if accounting:
+            for (s, c, a) in it.product(*map(range, shape)):
+                if not s and a:
+                    continue
+                self.accounting[(s, c, a)] = 0
 
     def __getitem__(self, item):
         return self.q[tuple(flatten(item))]
 
     def __setitem__(self, key, value):
         key = tuple(flatten(key))
-        # self.accounting[key] += 1
+        if self.accounting:
+            self.accounting[key] += 1
         self.q[key] = value
+
+    def __bool__(self):
+        if not self.accounting:
+            raise AttributeError()
+        return all(self.accounting.values())
 
     def greedy(self, state):
         ptr = self[state]

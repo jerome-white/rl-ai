@@ -27,7 +27,7 @@ servers = Servers(10, args.p_free)
 customers = Customers(4, args.high_priority)
 system = System(servers, customers)
 
-Q = Policy(len(servers), len(customers))
+Q = Policy(len(servers), len(customers), accounting=True)
 rho = 0
 
 (_, state) = system.step()
@@ -54,7 +54,8 @@ for i in range(args.steps):
 
     state = state_
 
-print('rho {}'.format(rho))
+print('rho', rho)
+print('Explored', bool(Q))
 
 # np.save('e67', Q.q)
 # for i in Q.accounting.items():
