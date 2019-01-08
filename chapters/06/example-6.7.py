@@ -1,10 +1,7 @@
-import random
 import logging
-import collections as cl
 from argparse import ArgumentParser
 
 import numpy as np
-import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
