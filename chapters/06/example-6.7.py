@@ -36,18 +36,13 @@ for i in range(args.steps):
     update = reward - rho + Q[(state_, action_)]
     Q[(state, action)] += args.alpha * (update - Q[(state, action)])
 
-    logging.info('{0}: {1} -[a:{2} r:{3} (Q:{4})]-> {5}'
-                 .format(i,
-                         state,
-                         action,
-                         reward,
-                         round(Q[(state, action)], 5),
-                         state_))
+    logging.info('{0}: {1} -[a:{2} r:{3} (Q:{4:0.5f})]-> {5}'
+                 .format(i, state, action, reward, Q[(state,action)], state_))
 
     action_ = Q.choose(state)
     if Q[(state, action)] == Q[(state, action_)]:
         rho += args.beta * (update - Q[(state, action_)])
-        logging.debug('updated rho: {}'.format(rho))
+        logging.debug('updated rho: {:0.8f}'.format(rho))
 
     state = state_
 
@@ -61,7 +56,7 @@ print('Explored', bool(Q))
 #
 # Priority versus number of free servers (Figure 6.17, top)
 #
-title = '$\\rho \\approx${}'.format(round(rho, 2))
+title = '$\\rho\\approx${:0.2f}'.format(rho)
 
 df = Q.toframe(np.argmax)
 df = df[df['servers'] > 0].pivot(index='priority',
