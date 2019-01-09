@@ -67,7 +67,6 @@ class Customers:
     def __init__(self, n, h):
         low = n - 1
         self.weights = [ (1 - h) / low ] * low + [ h ]
-        assert(sum(self.weights) == 1)
 
     def __len__(self):
         return len(self.weights)
@@ -113,7 +112,6 @@ class Policy:
             ptr = self[state]
             index = np.argwhere(ptr == np.max(ptr)).flatten()
             action = np.random.choice(index)
-        assert(0 <= action <= 1)
 
         return action
 
