@@ -79,11 +79,6 @@ plt.clf()
 #
 df = Q.toframe(np.max)
 
-# sns.lineplot(x='servers',
-#              y='value',
-#              hue='priority',
-#              data=df)
-
 for (i, g) in df.groupby('priority'):
     plt.plot(g['servers'], g['value'], label=i)
 plt.grid(True)
