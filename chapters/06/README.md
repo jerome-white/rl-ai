@@ -31,7 +31,9 @@ $> python example-6.5.py --alpha 0.5 --repeat 100
 
 Reproducing the results from this problem is extremely difficult; and
 the only reference implementations seem to be those provided at the
-books website. Challenges:
+books website
+([Lisp](http://incompleteideas.net/book/code/queuing.lisp),
+[C](http://incompleteideas.net/book/code/queuing.c)). Challenges:
 
 1. There is an implicit assumption that when zero servers are
    available, customers cannot be accepted. Because the policy (Q)
@@ -46,18 +48,21 @@ books website. Challenges:
    ```
 
 2. It is unclear what the correct model parameters should be. It looks
-   like alpha should be 0.01:
+   like alpha should be 0.01, and helps if high-priority probability
+   is 0.25:
 
    ```bash
-   $> python example-6.7.py --alpha 0.01
+   $> python example-6.7.py --alpha 0.01 --high-priority 0.25
    ```
 
-   This is consistent with the authors reference [C
-   implementation](http://incompleteideas.net/book/code/queuing.c),
-   and gets the figures closest to those in the book. The reference
-   implementations use different values --- both from the book, and
-   from each oether -- for the server-free probability and the
-   high-priority probability as well.
+   The alpha value is consistent with the authors C implementation,
+   while the priority value is consistent with the Lisp
+   implementation. The Lisp implementation actually doesn't weight
+   priorities at all; which is what a priority value of 0.25 actually
+   means in this implementation.
+
+   For other hyper parameters, the reference implementations use
+   different values --- both from the book, and from each other.
 
 3. What constitutes a high-priority customer is unclear. Whether it is
    just the highest priority, or its the top-*n*. This implementation
