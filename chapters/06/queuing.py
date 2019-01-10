@@ -85,9 +85,8 @@ class Policy:
         self.accounting = {}
         if accounting:
             for (s, c, a) in it.product(*map(range, shape)):
-                if not s and a:
-                    continue
-                self.accounting[(s, c, a)] = 0
+                if s or a:
+                    self.accounting[(s, c, a)] = 0
 
     def __getitem__(self, item):
         return self.q[tuple(flatten(item))]
