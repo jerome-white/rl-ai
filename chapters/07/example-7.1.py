@@ -9,7 +9,7 @@ import numpy as np
 
 from walk import TemporalDifference
 
-logging.basicConfig(level=logging.INFO,
+logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s %(levelname)s %(message)s',
                     datefmt='%H:%M:%S')
 
@@ -34,8 +34,7 @@ class OfflineSteps(Steps):
 
 def func(incoming, outgoing, episodes, states, gamma):
     states_ = states + 1
-    actuals = np.arange(-states_, states_, states_ + 1) / states_
-    actuals[0] = actuals[-1] = 0
+    actuals = np.linspace(-states_, states_, states_ + 1) / states_
 
     while True:
         run = incoming.get()
@@ -43,12 +42,9 @@ def func(incoming, outgoing, episodes, states, gamma):
 
         td = TemporalDifference(states, episodes, run.alpha, gamma, run.steps)
         for i in td:
-            logging.debug(i)
-            logging.debug(actuals)
-
-            # mse = np.sum(np.power(np.subtract(i, actuals), 2)) / states
-            # rmse = np.sqrt(mse)
-            # outgoing.put({ **run._asdict(), 'rmse': rmse })
+            mse = np.sum(np.power(np.subtract(i, actuals), 2)) / states
+            rmse = np.sqrt(mse)
+            outgoing.put({ **run._asdict(), 'rmse': rmse })
 
         outgoing.put(None)
 
