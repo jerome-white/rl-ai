@@ -23,7 +23,8 @@ def walk(states, initial=0):
             state = state_
         else:
             reward = 1 if state_ else -1
-            return Transition(state, action, reward)
+            yield Transition(state, action, reward)
+            break
 
 class Model:
     def __init__(self, states, episodes, alpha):
