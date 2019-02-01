@@ -18,7 +18,7 @@ def walk(states, initial=0):
         action = random.choice((-1, 1))
         state_ = state + action
 
-        if 0 < state_ < states:
+        if initial < state_ < states:
             yield Transition(state, action, 0)
             state = state_
         else:
