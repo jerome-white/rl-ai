@@ -64,8 +64,9 @@ outgoing = mp.Queue()
 initargs = (outgoing, incoming, args.episodes, args.states, args.gamma)
 with mp.Pool(args.workers, func, initargs):
     jobs = 0
+    num = args.alpha_max / args.alpha_step
     for reps in range(args.repetitions):
-        for alpha in np.arange(0, args.alpha_max, args.alpha_step):
+        for alpha in np.linspace(0, args.alpha_max, num):
             for (i, stairs) in enumerate((OnlineSteps, OfflineSteps)):
                 for step in stairs():
                     outgoing.put(Run(reps, alpha, bool(i), step))
