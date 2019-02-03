@@ -71,6 +71,6 @@ class TemporalDifference(Model):
         window = cl.deque(maxlen=self.n)
 
         for trans in walk(len(self.V)):
-            if not self.n or len(window) == window.maxlen:
-                self.V[trans.state] += sum(self.delta(window))
             window.append(trans)
+            if not window.maxlen or len(window) == window.maxlen:
+                self.V[trans.state] += sum(self.delta(window))
