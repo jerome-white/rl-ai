@@ -12,19 +12,20 @@ def power(base, exponent):
     return base ** exponent
 
 def walk(states, initial=0):
+    reward = 0
     state = states // 2
 
-    while True:
+    while not reward:
         action = random.choice((-1, 1))
         state_ = state + action
 
-        if initial < state_ < states:
-            yield Transition(state, action, 0)
-            state = state_
-        else:
-            reward = 1 if state_ else -1
-            yield Transition(state, action, reward)
-            break
+        if state_ <= initial:
+            reward = -1
+        elif state_ >= states:
+            reward = 1
+
+        yield Transition(state, action, reward)
+        state = state_
 
 class Model:
     def __init__(self, states, episodes, alpha):
