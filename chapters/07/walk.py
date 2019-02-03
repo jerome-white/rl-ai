@@ -58,13 +58,9 @@ class TemporalDifference(Model):
         self.gamma = gamma
         self.n = n
 
-    def R(self, window, time, state):
-        start = time - 1
-        if start >= 0:
-            stop = len(window) - 1
-            for (i, s) in enumerate(it.islice(window, start, stop)):
-                yield power(self.gamma, i) * s.reward
-        yield power(self.gamma, time) * self.V[state]
+    def R(self, window):
+        for (i, t) in enumerate(window):
+            yield power(self.gamma, i) * t.reward
 
     def delta(self, window):
         for (i, s) in enumerate(window):
