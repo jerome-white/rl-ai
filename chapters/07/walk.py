@@ -51,8 +51,10 @@ class TemporalDifference:
 
     # Corrected n-step truncated return (p6. 165)
     def R(self, window):
+        last = len(window) - 1
         for (i, t) in enumerate(window):
-            yield power(self.gamma, i) * t.reward
+            reward = t.reward if i < last else self.V[t.state]
+            yield power(self.gamma, i) * reward
 
     # Page 166: \Delta V_{t}(S_{t})
     def delta(self, window, state):
@@ -68,7 +70,7 @@ class OnlineUpdate(TemporalDifference):
         window = cl.deque(maxlen=self.n)
 
         for trans in walk(len(self.V)):
-            window.appendleft(trans)
+            window.append(trans)
             if not window.maxlen or len(window) == window.maxlen:
                 s = trans.state
                 self.V[s] += self.delta(window, s)
