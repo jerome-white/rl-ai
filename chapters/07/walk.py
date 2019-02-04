@@ -10,17 +10,17 @@ Transition = cl.namedtuple('Transition', 'state, action, reward')
 def power(base, exponent):
     return base ** exponent
 
-def walk(states, initial=0):
+def walk(end, start=0):
     reward = 0
-    state = states // 2
+    state = end // 2
 
     while not reward:
         action = random.choice((-1, 1))
         state_ = state + action
 
-        if state_ <= initial:
+        if state_ <= start:
             reward = -1
-        elif state_ >= states:
+        elif state_ >= end:
             reward = 1
 
         yield Transition(state, action, reward)
