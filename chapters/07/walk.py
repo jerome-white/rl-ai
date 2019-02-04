@@ -63,9 +63,8 @@ class TemporalDifference(Model):
             yield power(self.gamma, i) * t.reward
 
     def delta(self, window, state):
-        for i in range(len(window)):
-            reward = sum(self.R(it.islice(window, i + 1)))
-            yield self.alpha * (reward - self.V[state])
+        reward = sum(self.R(window))
+        yield self.alpha * (reward - self.V[state])
 
     def update(self):
         window = cl.deque(maxlen=self.n)
