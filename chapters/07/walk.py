@@ -58,14 +58,17 @@ class TemporalDifference(Model):
         self.gamma = gamma
         self.n = n
 
+    # Page 164: R_{t} from pg. 164
     def R(self, window):
         for (i, t) in enumerate(window):
             yield power(self.gamma, i) * t.reward
 
+    # Page 166: \Delta V_{t}(S_{t})
     def delta(self, window, state):
         reward = sum(self.R(window))
         yield self.alpha * (reward - self.V[state])
 
+    # Page 166: V(s) + \sum_{t=0}^{T-1}\Delta V_{t}(s)
     def update(self):
         window = cl.deque(maxlen=self.n)
 
