@@ -21,7 +21,6 @@ class Experiments:
         self.td = None
 
     def __iter__(self):
-        self.steps.sort()
         for i in self.steps:
             yield (i, self.td)
 
