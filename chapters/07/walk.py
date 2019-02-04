@@ -49,7 +49,7 @@ class TemporalDifference:
 
         return self.V
 
-    # Page 164: R_{t} from pg. 164
+    # Corrected n-step truncated return (p6. 165)
     def R(self, window):
         for (i, t) in enumerate(window):
             yield power(self.gamma, i) * t.reward
