@@ -1,5 +1,4 @@
 import random
-import itertools as it
 import functools as ft
 import collections as cl
 
@@ -73,3 +72,7 @@ class OnlineUpdate(TemporalDifference):
             if not window.maxlen or len(window) == window.maxlen:
                 s = trans.state
                 self.V[s] += self.delta(window, s)
+
+class OfflineUpdate(TemporalDifference):
+    def update(self):
+        return

@@ -7,7 +7,7 @@ from argparse import ArgumentParser
 
 import numpy as np
 
-from walk import OnlineUpdate
+from walk import OnlineUpdate, OfflineUpdate
 
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s %(levelname)s %(message)s',
@@ -15,32 +15,37 @@ logging.basicConfig(level=logging.DEBUG,
 
 Run = cl.namedtuple('Run', 'repetition, alpha, online, steps')
 
-class Steps(list):
+class Experiments:
     def __init__(self):
-        self.extend([ 1, 2, 3, 8, 15, 30, 60, 100, 200, 1000 ])
-        self._personalise()
-        self.sort()
+        self.steps = [ 1, 2, 3, 8, 15, 30, 60, 100, 200, 1000 ]
+        self.td = None
 
-    def _personalise(self):
-        raise NotImplementedError()
+    def __iter__(self):
+        self.steps.sort()
+        for i in self.steps:
+            yield (i, self.td)
 
-class OnlineSteps(Steps):
-    def _personalise(self):
-        self.append(5)
+class OnlineExperiments(Experiments):
+    def __init__(self):
+        super().__init__()
+        self.td = OnlineUpdate
+        self.steps.append(5)
 
-class OfflineSteps(Steps):
-    def _personalise(self):
-        self.extend([ 4, 6 ])
+class OfflineExperiments(Experiments):
+    def __init__(self):
+        super().__init__()
+        self.td = OfflineUpdate
+        self.steps.extend([ 4, 6 ])
 
 def func(incoming, outgoing, episodes, states, gamma):
     states_ = states + 1
     actuals = np.linspace(-states_, states_, states_ + 1) / states_
 
     while True:
-        run = incoming.get()
+        (run, TemporalDifference) = incoming.get()
         logging.info(run)
 
-        td = OnlineUpdate(states, episodes, run.alpha, gamma, run.steps)
+        td = TemporalDifference(states, episodes, run.alpha, gamma, run.steps)
         for i in td:
             # logging.debug(i)
             mse = np.sum(np.power(np.subtract(i, actuals), 2)) / states
@@ -68,11 +73,12 @@ with mp.Pool(args.workers, func, initargs):
     assert(num.is_integer())
 
     jobs = 0
-    for reps in range(args.repetitions):
+    for rep in range(args.repetitions):
         for alpha in np.linspace(0, args.alpha_max, int(num)):
-            for (i, stairs) in enumerate((OnlineSteps, OfflineSteps)):
-                for step in stairs():
-                    outgoing.put(Run(reps, alpha, i, step))
+            for (i, exp) in enumerate((OfflineExperiments, OnlineExperiments)):
+                for (steps, td) in exp():
+                    run = Run(rep, alpha, i, steps)
+                    outgoing.put((run, td))
                     jobs += 1
 
     writer = None
