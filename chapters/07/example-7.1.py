@@ -7,7 +7,7 @@ from argparse import ArgumentParser
 
 import numpy as np
 
-from walk import TemporalDifference
+from walk import OnlineUpdate
 
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s %(levelname)s %(message)s',
@@ -40,8 +40,9 @@ def func(incoming, outgoing, episodes, states, gamma):
         run = incoming.get()
         logging.info(run)
 
-        td = TemporalDifference(states, episodes, run.alpha, gamma, run.steps)
+        td = OnlineUpdate(states, episodes, run.alpha, gamma, run.steps)
         for i in td:
+            # logging.debug(i)
             mse = np.sum(np.power(np.subtract(i, actuals), 2)) / states
             rmse = np.sqrt(mse)
             outgoing.put({ **run._asdict(), 'rmse': rmse })
@@ -63,10 +64,12 @@ outgoing = mp.Queue()
 
 initargs = (outgoing, incoming, args.episodes, args.states, args.gamma)
 with mp.Pool(args.workers, func, initargs):
-    jobs = 0
     num = args.alpha_max / args.alpha_step
+    assert(num.is_integer())
+
+    jobs = 0
     for reps in range(args.repetitions):
-        for alpha in np.linspace(0, args.alpha_max, num):
+        for alpha in np.linspace(0, args.alpha_max, int(num)):
             for (i, stairs) in enumerate((OnlineSteps, OfflineSteps)):
                 for step in stairs():
                     outgoing.put(Run(reps, alpha, i, step))

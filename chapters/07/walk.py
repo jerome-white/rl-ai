@@ -27,10 +27,12 @@ def walk(states, initial=0):
         yield Transition(state, action, reward)
         state = state_
 
-class Model:
-    def __init__(self, states, episodes, alpha):
+class TemporalDifference:
+    def __init__(self, states, episodes, alpha, gamma, n=None):
         self.episodes = episodes
         self.alpha = alpha
+        self.gamma = gamma
+        self.n = n
 
         self.step = 0
         self.V = np.zeros(states + 2)
@@ -48,16 +50,6 @@ class Model:
 
         return self.V
 
-    def update(self):
-        raise NotImplementedError()
-
-class TemporalDifference(Model):
-    def __init__(self, states, episodes, alpha, gamma, n=None):
-        super().__init__(states, episodes, alpha)
-
-        self.gamma = gamma
-        self.n = n
-
     # Page 164: R_{t} from pg. 164
     def R(self, window):
         for (i, t) in enumerate(window):
@@ -66,9 +58,13 @@ class TemporalDifference(Model):
     # Page 166: \Delta V_{t}(S_{t})
     def delta(self, window, state):
         reward = sum(self.R(window))
-        yield self.alpha * (reward - self.V[state])
+        return self.alpha * (reward - self.V[state])
 
     # Page 166: V(s) + \sum_{t=0}^{T-1}\Delta V_{t}(s)
+    def update(self):
+        raise NotImplementedError()
+
+class OnlineUpdate(TemporalDifference):
     def update(self):
         window = cl.deque(maxlen=self.n)
 
