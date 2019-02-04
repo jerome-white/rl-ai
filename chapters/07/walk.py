@@ -73,4 +73,4 @@ class TemporalDifference(Model):
             window.appendleft(trans)
             if not window.maxlen or len(window) == window.maxlen:
                 s = trans.state
-                self.V[s] += sum(self.delta(window, s))
+                self.V[s] += self.delta(window, s)
