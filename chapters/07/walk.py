@@ -49,7 +49,7 @@ class TemporalDifference:
 
         return self.V
 
-    # Corrected n-step truncated return (p6. 165)
+    # Corrected n-step truncated return (pg. 165)
     def R(self, window):
         last = len(window) - 1
         for (i, t) in enumerate(window):
