@@ -17,10 +17,11 @@ def walk(end, start=0):
     while not reward:
         action = random.choice((-1, 1))
         state_ = state + action
+        assert(start <= state_ <= end)
 
-        if state_ <= start:
+        if state_ == start:
             reward = -1
-        elif state_ >= end:
+        elif state_ == end:
             reward = 1
 
         yield Transition(state, action, reward)
