@@ -35,7 +35,7 @@ class TemporalDifference:
         self.n = n
 
         self.step = 0
-        self.V = np.zeros(states + 2)
+        self.V = np.zeros(states + 2) # add the start and end state
 
     def __iter__(self):
         assert(self.episodes >= 0)
