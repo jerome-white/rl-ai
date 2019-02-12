@@ -52,15 +52,18 @@ class TemporalDifference:
 
     # Corrected n-step truncated return (pg. 165)
     def R(self, window):
+        reward = 0
         last = len(window) - 1
+
         for (i, t) in enumerate(window):
-            reward = t.reward if i < last else self.V[t.state]
-            yield power(self.gamma, i) * reward
+            r = t.reward if i < last else self.V[t.state]
+            yield power(self.gamma, i) * r
+
+        return reward
 
     # Page 166: \Delta V_{t}(S_{t})
     def delta(self, window, state):
-        reward = sum(self.R(window))
-        return self.alpha * (reward - self.V[state])
+        return self.alpha * (self.R(window) - self.V[state])
 
     # Page 166: V(s) + \sum_{t=0}^{T-1}\Delta V_{t}(s)
     def update(self):
