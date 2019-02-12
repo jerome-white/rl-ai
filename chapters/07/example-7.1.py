@@ -64,7 +64,7 @@ outgoing = mp.Queue()
 
 initargs = (outgoing, incoming, args.episodes, args.states, args.gamma)
 with mp.Pool(args.workers, func, initargs):
-    num = args.alpha_max / args.alpha_step
+    num = (args.alpha_max / args.alpha_step) + 1
     assert(num.is_integer())
 
     jobs = 0
