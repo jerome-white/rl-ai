@@ -75,13 +75,21 @@ class TemporalDifference:
 
 class OnlineUpdate(TemporalDifference):
     def update(self):
+        step = walk(len(self.V))
         window = cl.deque(maxlen=self.n)
 
-        for trans in walk(len(self.V)):
-            window.append(trans)
-            if not window.maxlen or len(window) == window.maxlen:
-                s = trans.state
-                self.V[s] += self.delta(window, s)
+        while True:
+            try:
+                window.append(next(step))
+                if window.maxlen and len(window) < window.maxlen:
+                    continue
+            except StopIteration:
+                pass
+
+            if not window:
+                 break
+            trx = window.popleft()
+            self.V[trx.state] += self.delta(window, trx.state)
 
 class OfflineUpdate(TemporalDifference):
     def update(self):
