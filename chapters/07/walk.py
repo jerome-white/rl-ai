@@ -57,7 +57,7 @@ class TemporalDifference:
 
         for (i, t) in enumerate(window):
             r = t.reward if i < last else self.V[t.state]
-            yield power(self.gamma, i) * r
+            reward += power(self.gamma, i) * r
 
         return reward
 
