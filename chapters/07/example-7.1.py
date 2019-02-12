@@ -7,7 +7,7 @@ from argparse import ArgumentParser
 
 import numpy as np
 
-from walk import OnlineUpdate, OfflineUpdate
+from walk import OnlineUpdate, OfflineUpdate, TemporalDifference
 
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s %(levelname)s %(message)s',
@@ -37,19 +37,15 @@ class OfflineExperiments(Experiments):
         self.steps.extend([ 4, 6 ])
 
 def func(incoming, outgoing, episodes, states, gamma):
-    states_ = states + 1
-    actuals = np.linspace(-states_, states_, states_ + 1) / states_
-
     while True:
-        (run, TemporalDifference) = incoming.get()
+        (run, TD) = incoming.get()
         logging.info(run)
 
-        td = TemporalDifference(states, episodes, run.alpha, gamma, run.steps)
-        for i in td:
+        for i in TD(states, episodes, run.alpha, gamma, run.steps):
             # logging.debug(i)
-            mse = np.sum(np.power(np.subtract(i, actuals), 2)) / states
-            rmse = np.sqrt(mse)
-            outgoing.put({ **run._asdict(), 'rmse': rmse })
+            outgoing.put({ **run._asdict(),
+                           'rmse': TemporalDifference.rmse(i)
+            })
 
         outgoing.put(None)
 
