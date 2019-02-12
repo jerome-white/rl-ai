@@ -29,13 +29,13 @@ def walk(end, start=0):
 
 class TemporalDifference:
     def __init__(self, states, episodes, alpha, gamma, n=None):
+        self.V = np.zeros(states)
         self.episodes = episodes
         self.alpha = alpha
         self.gamma = gamma
         self.n = n
 
         self.step = 0
-        self.V = np.zeros(states + 2) # add the start and end state
 
     def __iter__(self):
         assert(self.episodes >= 0)
