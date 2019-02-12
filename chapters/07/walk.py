@@ -66,6 +66,13 @@ class TemporalDifference:
     def update(self):
         raise NotImplementedError()
 
+    @staticmethod
+    def rmse(V):
+        optimal = np.arange(len(V))
+        distance = V - optimal
+
+        return np.sqrt(np.sum(np.power(distance, 2)) / len(V))
+
 class OnlineUpdate(TemporalDifference):
     def update(self):
         window = cl.deque(maxlen=self.n)
