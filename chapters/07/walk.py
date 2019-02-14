@@ -53,7 +53,7 @@ class TemporalDifference:
     # Corrected n-step truncated return (pg. 165)
     def R(self, window):
         reward = 0
-        last = len(window) - 1
+        last = window.maxlen - 1
 
         for (i, t) in enumerate(window):
             r = t.reward if i < last else self.V[t.state]
