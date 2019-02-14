@@ -71,7 +71,8 @@ class TemporalDifference:
 
     @staticmethod
     def rmse(V):
-        optimal = np.arange(len(V))
+        count = len(V)
+        optimal = np.arange(-count, count, step=2) / count
         distance = V - optimal
 
         return np.sqrt(np.sum(np.power(distance, 2)) / len(V))
