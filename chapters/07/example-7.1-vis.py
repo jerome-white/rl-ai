@@ -10,7 +10,7 @@ df = (pd
           'online',
           'alpha',
           'steps',
-      ])
+      ]))
 
 for (i, data) in df.groupby('online'):
     plt.clf()
