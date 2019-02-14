@@ -92,8 +92,8 @@ class OnlineUpdate(TemporalDifference):
 
             if not window:
                  break
-            trx = window[0]
-            self.V[trx.state] += self.delta(window, trx.state)
+            state = window[0].state
+            self.V[state] += self.delta(window, state)
 
 class OfflineUpdate(TemporalDifference):
     def update(self):
