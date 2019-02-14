@@ -88,11 +88,11 @@ class OnlineUpdate(TemporalDifference):
                 if window.maxlen and len(window) < window.maxlen:
                     continue
             except StopIteration:
-                pass
+                window.popleft()
 
             if not window:
                  break
-            trx = window.popleft()
+            trx = window[0]
             self.V[trx.state] += self.delta(window, trx.state)
 
 class OfflineUpdate(TemporalDifference):
