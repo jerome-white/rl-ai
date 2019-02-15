@@ -96,5 +96,13 @@ class OnlineUpdate(TemporalDifference):
             self.V[state] += self.delta(window, state)
 
 class OfflineUpdate(TemporalDifference):
+    def scroll(self, window):
+        for i in range(0, len(window), self.n):
+            yield window[0:i + 1]
+
     def update(self):
-        return
+        episode = list(walk(len(self.V)))
+
+        for s in range(len(self.V)):
+            delta = map(lambda x: self.delta(x, s), self.scroll(episode))
+            self.V[s] += sum(delta)
