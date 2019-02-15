@@ -89,9 +89,8 @@ class OnlineUpdate(TemporalDifference):
                     continue
             except StopIteration:
                 window.popleft()
-
-            if not window:
-                 break
+                if not window:
+                    break
             state = window[0].state
             self.V[state] += self.delta(window, state)
 
